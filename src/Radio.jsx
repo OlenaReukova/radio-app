@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { RadioBrowserApi } from "radio-browser-api";
 import AudioPlayer from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
 import defaultImage from "./radio.avif";
 
 export default function Radio() {
-  const [stations, setStations] = useState();
+  const [stations, setStations] = useState([]);
   const [stationFilter, setStationFilter] = useState("all");
 
   useEffect(() => {
@@ -16,19 +15,16 @@ export default function Radio() {
   }, [stationFilter]);
 
   const setupApi = async (stationFilter) => {
-    const api = new RadioBrowserApi(fetch.bind(window), "My Radio App");
-
-    const stations = await api
-      .searchStations({
-        language: "english",
-        tag: stationFilter,
-        limit: 30,
-      })
-      .then((data) => {
-        return data;
-      });
-
-    return stations;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/radio?filter=${stationFilter}`
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching data", error);
+      return [];
+    }
   };
 
   const filters = [
@@ -65,6 +61,8 @@ export default function Radio() {
       <div className="stations">
         {stations &&
           stations.map((station, index) => {
+            console.log(station);
+            console.log(station.url_Resolved);
             return (
               <div className="station" key={index}>
                 <div className="stationName">
@@ -79,7 +77,7 @@ export default function Radio() {
 
                 <AudioPlayer
                   className="player"
-                  src={station.urlResolved}
+                  src={station.url_resolved}
                   showJumpControls={false}
                   layout="stacked"
                   customProgressBarSection={[]}
