@@ -1,24 +1,24 @@
-import './App.css';
-import React, { useEffect } from 'react';
-import Cookies from 'js-cookie';
-import Radio from './Radio';
-import Hero from './Hero';
-import Footer from './Footer';
+import "./App.css";
+import { useEffect } from "react";
+import Cookies from "js-cookie";
+import Radio from "./Radio";
+import Hero from "./Hero";
+import Footer from "./Footer";
 
 function App() {
   useEffect(() => {
-    Cookies.set('yourCookieName', 'yourCookieValue', {
-      sameSite: 'none',
+    Cookies.set("yourCookieName", "yourCookieValue", {
+      sameSite: "none",
       secure: true,
     });
 
-    Cookies.set('anotherCookie', 'anotherValue', { sameSite: 'strict' });
+    Cookies.set("anotherCookie", "anotherValue", { sameSite: "strict" });
 
-    Cookies.set('yetAnotherCookie', 'yetAnotherValue', { sameSite: 'lax' });
+    Cookies.set("yetAnotherCookie", "yetAnotherValue", { sameSite: "lax" });
   }, []);
 
   return (
-    <div className='App'>
+    <div className="App">
       <h1>Radio Player</h1>
       <Hero />
       <Radio />
