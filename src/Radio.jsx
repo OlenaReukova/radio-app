@@ -1,34 +1,31 @@
 import { useEffect, useState } from "react";
-import { RadioBrowserApi } from "radio-browser-api";
-import AudioPlayer from "react-h5-audio-player";
+import AudioPlayer, { RHAP_UI } from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
 import defaultImage from "./radio.avif";
 
 export default function Radio() {
-  const [stations, setStations] = useState();
+  const [stations, setStations] = useState([]);
   const [stationFilter, setStationFilter] = useState("all");
 
   useEffect(() => {
     setupApi(stationFilter).then((data) => {
-      console.log(data);
+      console.log("Fetched data from API:", data);
       setStations(data);
     });
   }, [stationFilter]);
 
   const setupApi = async (stationFilter) => {
-    const api = new RadioBrowserApi(fetch.bind(window), "My Radio App");
-
-    const stations = await api
-      .searchStations({
-        language: "english",
-        tag: stationFilter,
-        limit: 30,
-      })
-      .then((data) => {
-        return data;
-      });
-
-    return stations;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/radio?filter=${stationFilter}`
+      );
+      const data = await response.json();
+      console.log("Fetched data from API:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching data", error);
+      return [];
+    }
   };
 
   const filters = [
@@ -65,6 +62,14 @@ export default function Radio() {
       <div className="stations">
         {stations &&
           stations.map((station, index) => {
+            console.log(station);
+            console.log(station.url_resolved);
+
+            const shortName =
+              station.name.length > 36
+                ? station.name.slice(0, 36) + "..."
+                : station.name;
+
             return (
               <div className="station" key={index}>
                 <div className="stationName">
@@ -74,18 +79,23 @@ export default function Radio() {
                     alt="station logo"
                     onError={setDefaultSrc}
                   />
-                  <div className="name">{station.name}</div>
+                  <div className="name">{shortName}</div>
                 </div>
 
-                <AudioPlayer
-                  className="player"
-                  src={station.urlResolved}
-                  showJumpControls={false}
-                  layout="stacked"
-                  customProgressBarSection={[]}
-                  customControlsSection={["MAIN_CONTROLS", "VOLUME_CONTROLS"]}
-                  autoPlayAfterSrcChange={false}
-                />
+                {station.url_resolved ? (
+                  <AudioPlayer
+                    className="player"
+                    src={station.url_resolved}
+                    showJumpControls={false}
+                    layout="stacked"
+                    customVolumeControls={[RHAP_UI.VOLUME]}
+                    customProgressBarSection={[]}
+                    customControlsSection={["MAIN_CONTROLS", "VOLUME_CONTROLS"]}
+                    autoPlayAfterSrcChange={false}
+                  />
+                ) : (
+                  <p>Stream URL not available</p>
+                )}
               </div>
             );
           })}
