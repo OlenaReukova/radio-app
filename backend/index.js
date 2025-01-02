@@ -1,6 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
-// import cors from "cors";
+import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -8,13 +8,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// app.use(
-//   cors({
-//     origin: "https://radio-app-client.onrender.com",
-//   })
-// );
+app.use(
+  cors({
+    origin: "https://radio-app-client.onrender.com",
+  })
+);
 
-// app.options("*", cors());
+app.options("*", cors());
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Radio App API!");
