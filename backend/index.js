@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the Radio App API!");
+});
+
 app.get("/api/radio", async (req, res) => {
   const stationFilter = req.query.filter || "all";
   try {
