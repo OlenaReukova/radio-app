@@ -1,4 +1,4 @@
-# 📻 Radio Player app in React
+# 📻 Radio Player app
 
 The radio app features clickable music types, with a simple and user-friendly interface.
 
