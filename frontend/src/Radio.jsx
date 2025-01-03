@@ -16,7 +16,8 @@ export default function Radio() {
 
   const setupApi = async (stationFilter) => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const baseUrl =
+        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
       const response = await fetch(
         `${baseUrl}/api/radio?filter=${stationFilter}`
       );
