@@ -10,7 +10,9 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "https://radio-app-client.onrender.com",
+    origin: process.env.FRONEND_URL,
+    // methods: ["GET"],
+    // allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
