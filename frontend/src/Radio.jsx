@@ -1,17 +1,41 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import AudioPlayer, { RHAP_UI } from "react-h5-audio-player";
+import "react-h5-audio-player/lib/styles.css";
+import defaultImage from "./radio.avif";
 
-const Radio = () => {
+export default function Radio() {
   const [stations, setStations] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState("all");
+  const [stationFilter, setStationFilter] = useState("all");
   const [favourites, setFavourites] = useState(() => {
     const stored = localStorage.getItem("favourites");
     return stored ? JSON.parse(stored) : [];
   });
+  const [sortByCountry, setSortByCountry] = useState(false);
 
-  const categories = [
+  useEffect(() => {
+    setupApi(stationFilter).then((data) => {
+      console.log("Fetched data from API:", data);
+      setStations(data);
+    });
+  }, [stationFilter]);
+
+  const setupApi = async (stationFilter) => {
+    try {
+      const baseUrl =
+        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+      const response = await fetch(
+        `${baseUrl}/api/radio?filter=${stationFilter}`
+      );
+      const data = await response.json();
+      console.log("Fetched data from API:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching data", error);
+      return [];
+    }
+  };
+
+  const filters = [
     "all",
     "classical",
     "country",
@@ -25,30 +49,14 @@ const Radio = () => {
     "rock",
   ];
 
-  useEffect(() => {
-    if (view === "favourites") return;
-
-    const fetchStations = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `https://radio-app-server.vercel.app/api/radio?filter=${filter}`
-        );
-        const data = await response.json();
-        setStations(data.slice(0, 40));
-      } catch (err) {
-        console.error("Ошибка при загрузке:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStations();
-  }, [filter, view]);
+  const setDefaultSrc = (event) => {
+    event.target.src = defaultImage;
+  };
 
   const toggleFavourite = (station) => {
+    const exists = favourites.find((f) => f.stationuuid === station.stationuuid);
     let updated;
-    if (favourites.find((f) => f.stationuuid === station.stationuuid)) {
+    if (exists) {
       updated = favourites.filter((f) => f.stationuuid !== station.stationuuid);
     } else {
       updated = [...favourites, station];
@@ -57,21 +65,32 @@ const Radio = () => {
     localStorage.setItem("favourites", JSON.stringify(updated));
   };
 
-  const displayedStations =
-    view === "favourites" ? favourites : stations.filter((s) =>
-      s.name.toLowerCase().includes(search.toLowerCase())
-    );
+  const sortedStations = sortByCountry
+    ? [...stations].sort((a, b) =>
+        (a.country || "").localeCompare(b.country || "")
+      )
+    : stations;
 
   return (
-    <div style={{ textAlign: "center", padding: "2rem" }}>
-      <h1>🎧 Radio Player</h1>
+    <div className="radio">
+      <div className="filters">
+        {filters.map((filter, index) => (
+          <span
+            key={index}
+            className={stationFilter === filter ? "selected" : ""}
+            onClick={() => setStationFilter(filter)}
+          >
+            {filter}
+          </span>
+        ))}
+      </div>
 
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ margin: "1rem 0" }}>
         <button
-          onClick={() => setView("all")}
+          onClick={() => setSortByCountry(!sortByCountry)}
           style={{
             marginRight: "0.5rem",
-            background: view === "all" ? "#8c52ff" : "#2e2e2e",
+            background: sortByCountry ? "#8c52ff" : "#2e2e2e",
             color: "#fff",
             border: "none",
             borderRadius: "5px",
@@ -79,12 +98,13 @@ const Radio = () => {
             cursor: "pointer",
           }}
         >
-          Все станции
+          {sortByCountry ? "Сортировка: по странам ↑" : "Сортировать по странам"}
         </button>
+
         <button
-          onClick={() => setView("favourites")}
+          onClick={() => setStations(favourites)}
           style={{
-            background: view === "favourites" ? "#8c52ff" : "#2e2e2e",
+            background: "#8c52ff",
             color: "#fff",
             border: "none",
             borderRadius: "5px",
@@ -92,109 +112,68 @@ const Radio = () => {
             cursor: "pointer",
           }}
         >
-          ⭐ Избранное
+          ⭐ Показать избранное
         </button>
       </div>
 
-      {view === "all" && (
-        <>
-          <input
-            type="text"
-            placeholder="Поиск станции..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              padding: "0.5rem",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-              marginBottom: "1rem",
-              width: "60%",
-            }}
-          />
+      <div className="stations">
+        {sortedStations &&
+          sortedStations.map((station, index) => {
+            const shortName =
+              station.name.length > 36
+                ? station.name.slice(0, 36) + "..."
+                : station.name;
 
-          <div style={{ marginBottom: "1rem" }}>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                style={{
-                  margin: "0.2rem",
-                  background: filter === cat ? "#8c52ff" : "#444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "5px",
-                  padding: "0.4rem 0.8rem",
-                  cursor: "pointer",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+            const isFav = favourites.some(
+              (f) => f.stationuuid === station.stationuuid
+            );
 
-      {loading ? (
-        <p>Загрузка станций...</p>
-      ) : displayedStations.length === 0 ? (
-        <p>Ничего не найдено</p>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1rem",
-          }}
-        >
-          {displayedStations.map((station) => (
-            <div
-              key={station.stationuuid}
-              style={{
-                background: "#1f1f2e",
-                padding: "1rem",
-                borderRadius: "10px",
-                color: "#fff",
-              }}
-            >
-              <img
-                src={station.favicon || "/default-radio.png"}
-                alt={station.name}
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "8px",
-                  objectFit: "cover",
-                }}
-              />
-              <h3 style={{ marginTop: "0.5rem" }}>{station.name}</h3>
-              <p style={{ opacity: 0.7 }}>{station.country}</p>
+            return (
+              <div className="station" key={index}>
+                <div className="stationName">
+                  <img
+                    className="logo"
+                    src={station.favicon}
+                    alt="station logo"
+                    onError={setDefaultSrc}
+                  />
+                  <div className="name">{shortName}</div>
+                </div>
 
-              <button
-                onClick={() => toggleFavourite(station)}
-                style={{
-                  background: "none",
-                  border: "1px solid #8c52ff",
-                  color: favourites.find(
-                    (f) => f.stationuuid === station.stationuuid
-                  )
-                    ? "#ff5a79"
-                    : "#fff",
-                  borderRadius: "5px",
-                  padding: "0.3rem 0.7rem",
-                  cursor: "pointer",
-                  marginTop: "0.4rem",
-                }}
-              >
-                {favourites.find((f) => f.stationuuid === station.stationuuid)
-                  ? "Удалить"
-                  : "В избранное"}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <button
+                    onClick={() => toggleFavourite(station)}
+                    style={{
+                      background: isFav ? "#ff5a79" : "#444",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "5px",
+                      padding: "0.3rem 0.6rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isFav ? "Удалить из избранного" : "Добавить в избранное"}
+                  </button>
+                </div>
+
+                {station.url_resolved ? (
+                  <AudioPlayer
+                    className="player"
+                    src={station.url_resolved}
+                    showJumpControls={false}
+                    layout="stacked"
+                    customVolumeControls={[RHAP_UI.VOLUME]}
+                    customProgressBarSection={[]}
+                    customControlsSection={["MAIN_CONTROLS", "VOLUME_CONTROLS"]}
+                    autoPlayAfterSrcChange={false}
+                  />
+                ) : (
+                  <p>Stream URL not available</p>
+                )}
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
-};
-
-export default Radio;
+}
