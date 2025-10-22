@@ -2,22 +2,49 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createClient } from "@libsql/client";
 
 dotenv.config();
 
 const config = {
   port: process.env.PORT || 5000,
-  defaultTimeout: 5000,
+  defaultTimeout: 10000,
   statusTimeout: 3000,
-  defaultLimit: 30,
+  batchSize: 200,
+  refreshInterval: 1000 * 60 * 60 * 24,
 };
 
-const createTimeoutFetch = async (url, options = {}, timeout = config.defaultTimeout) => {
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+const initDB = async () => {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS stations (
+      stationuuid TEXT PRIMARY KEY,
+      name TEXT,
+      country TEXT,
+      tags TEXT,
+      url_resolved TEXT,
+      favicon TEXT
+    )
+  `);
+  console.log("🗄️ Database initialised (Turso SQLite)");
+};
+
+const createTimeoutFetch = async (
+  url,
+  options = {},
+  timeout = config.defaultTimeout
+) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
-
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     return await response.json();
   } finally {
@@ -27,12 +54,12 @@ const createTimeoutFetch = async (url, options = {}, timeout = config.defaultTim
 
 const getActiveMirrors = async () => {
   try {
-    const response = await fetch("https://all.api.radio-browser.info/json/servers");
+    const response = await fetch(
+      "https://all.api.radio-browser.info/json/servers"
+    );
     const mirrors = await response.json();
-    return mirrors.map(m => `https://${m.name}`);
-  } catch (err) {
-    console.error("Failed to fetch mirrors:", err.message);
-    // fallback на рабочие известные зеркала
+    return mirrors.map((m) => `https://${m.name}`);
+  } catch {
     return [
       "https://de1.api.radio-browser.info",
       "https://de2.api.radio-browser.info",
@@ -42,57 +69,85 @@ const getActiveMirrors = async () => {
 };
 
 const radioService = {
-  async fetchStations(filter = "all", limit = config.defaultLimit) {
+  async fetchAllStations(filter = "all") {
     const tag = filter === "all" ? "" : filter;
     const mirrors = await getActiveMirrors();
-    const errors = [];
-
     for (const mirror of mirrors) {
       try {
-        const url = `${mirror}/json/stations/search?language=english&tag=${tag}&limit=${limit}`;
-        console.log(`Trying API mirror: ${url}`);
-
-        const data = await createTimeoutFetch(url, {
-          headers: { "User-Agent": "RadioApp/1.0", Accept: "application/json" },
-        });
-
-        console.log(`Fetched ${data.length} stations from ${mirror}`);
-        return data;
-      } catch (error) {
-        console.error(`Error with mirror ${mirror}:`, error.message);
-        errors.push(`${mirror}: ${error.message}`);
+        const stations = await this.fetchAllFromMirror(mirror, tag);
+        if (stations.length > 0) return stations;
+      } catch (err) {
+        console.error(`Mirror ${mirror} failed:`, err.message);
       }
     }
-
-    throw {
-      status: 503,
-      message: "Unable to fetch radio stations from any API mirror",
-      errors,
-    };
+    return [];
   },
 
-  async checkStatus() {
-    const mirrors = await getActiveMirrors();
-    return Promise.all(
-      mirrors.map(async (mirror) => {
-        try {
-          const data = await createTimeoutFetch(
-            `${mirror}/json/stats`,
-            {},
-            config.statusTimeout
-          );
+  async fetchAllFromMirror(mirror, tag) {
+    let offset = 0;
+    let allStations = [];
+    const seen = new Set();
 
-          return {
-            mirror,
-            status: "up",
-            stations: data.stations,
-            response_time: data.response_time_ms || "unknown",
-          };
-        } catch (error) {
-          return { mirror, status: "down", error: error.message };
-        }
-      })
-    );
+    while (true) {
+      const params = new URLSearchParams({
+        hidebroken: "true",
+        limit: config.batchSize.toString(),
+        offset: offset.toString(),
+      });
+      if (tag) params.append("tag", tag);
+      const url = `${mirror}/json/stations?${params.toString()}`;
+      console.log(`➡️ Fetching from ${mirror} offset=${offset}`);
+      const data = await createTimeoutFetch(url);
+      if (!data || data.length === 0) break;
+      const newOnes = data.filter((s) => !seen.has(s.stationuuid));
+      if (newOnes.length === 0) break;
+      newOnes.forEach((s) => seen.add(s.stationuuid));
+      allStations = [...allStations, ...newOnes];
+      offset += config.batchSize;
+    }
+    console.log(`✅ Got ${allStations.length} stations total.`);
+    return allStations;
+  },
+
+  async saveStationsToDB(stations) {
+    console.log(`💾 Saving ${stations.length} stations to DB...`);
+    const insertStmt = `
+      INSERT OR REPLACE INTO stations 
+      (stationuuid, name, country, tags, url_resolved, favicon)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    for (const s of stations) {
+      await db.execute(insertStmt, [
+        s.stationuuid,
+        s.name || "",
+        s.country || "",
+        s.tags || "",
+        s.url_resolved || "",
+        s.favicon || "",
+      ]);
+    }
+    console.log("Stations saved to DB");
+  },
+
+  async getStationsFromDB(filters = {}) {
+    const conditions = [];
+    const values = [];
+
+    if (filters.country) {
+      conditions.push("LOWER(country) = LOWER(?)");
+      values.push(filters.country);
+    }
+    if (filters.genre) {
+      conditions.push("LOWER(tags) LIKE LOWER(?)");
+      values.push(`%${filters.genre}%`);
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+    const sql = `SELECT * FROM stations ${whereClause} LIMIT 500`;
+    const result = await db.execute(sql, values);
+    return result.rows || [];
   },
 };
 
@@ -100,39 +155,34 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "OPTIONS"] }));
 app.options("*", cors());
 
-const errorHandler = (err, req, res, next) => {
-  console.error("Error:", err);
-  res.status(err.status || 500).json({
-    message: err.message || "Internal server error",
-    errors: err.errors,
-  });
+const refreshStations = async () => {
+  console.log("♻️ Refreshing station data...");
+  const stations = await radioService.fetchAllStations("all");
+  await radioService.saveStationsToDB(stations);
 };
+initDB().then(refreshStations);
 
-app.get("/", (_, res) => res.send("Welcome to the Radio App API!"));
+setInterval(refreshStations, config.refreshInterval);
+
+app.get("/", (_, res) => res.send("Welcome to the Radio App API with Turso "));
 
 app.get("/api/radio", async (req, res, next) => {
   try {
-    const { filter = "all", limit = config.defaultLimit } = req.query;
-    const data = await radioService.fetchStations(filter, limit);
+    const { country, genre } = req.query;
+    const data = await radioService.getStationsFromDB({ country, genre });
     res.json(data);
   } catch (err) {
     next(err);
   }
 });
 
-app.get("/api/status", async (_, res, next) => {
-  try {
-    const status = await radioService.checkStatus();
-    res.json(status);
-  } catch (err) {
-    next(err);
-  }
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Server error" });
 });
-
-app.use(errorHandler);
 
 app.listen(config.port, () => {
-  console.log(`✅ Server running on port ${config.port}`);
+  console.log(`Server running on port ${config.port}`);
 });
-
-export default app;
