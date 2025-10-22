@@ -162,7 +162,8 @@ const refreshStations = async () => {
 };
 initDB().then(refreshStations);
 
-setInterval(refreshStations, config.refreshInterval);
+await initDB();
+console.log(" Database initialised. Monthly refresh handled by Vercel Cron.");
 
 app.get("/", (_, res) => res.send("Welcome to the Radio App API with Turso "));
 
@@ -173,6 +174,23 @@ app.get("/api/radio", async (req, res, next) => {
     res.json(data);
   } catch (err) {
     next(err);
+  }
+});
+
+app.get("/api/refresh", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    console.log("Monthly refresh triggered via Vercel Cron...");
+    await refreshStations();
+    res.json({ ok: true, message: "Stations refreshed successfully" });
+  } catch (err) {
+    console.error("Error during cron refresh:", err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
