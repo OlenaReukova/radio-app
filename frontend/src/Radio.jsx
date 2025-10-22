@@ -1,35 +1,33 @@
 import React, { useEffect, useState } from "react";
 import "./Radio.css";
-import { FaPlay, FaPause, FaHeart, FaRegHeart, FaVolumeUp, FaSearch, FaStar } from "react-icons/fa";
+import { FaPlay, FaPause, FaHeart, FaRegHeart, FaVolumeUp, FaSearch } from "react-icons/fa";
 
 const Radio = () => {
   const [stations, setStations] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [country, setCountry] = useState("");
   const [current, setCurrent] = useState(null);
+  const [audio] = useState(new Audio());
   const [favourites, setFavourites] = useState(() =>
     JSON.parse(localStorage.getItem("favourites")) || []
   );
-  const [audio] = useState(new Audio());
   const [volume, setVolume] = useState(0.5);
+  const [loading, setLoading] = useState(false);
   const [view, setView] = useState("all");
-  const [country, setCountry] = useState("");
 
   const categories = [
     "all",
-    "classical",
-    "country",
-    "dance",
-    "disco",
-    "house",
-    "jazz",
     "pop",
-    "rap",
-    "retro",
     "rock",
+    "dance",
+    "jazz",
+    "retro",
+    "house",
+    "country",
   ];
 
   useEffect(() => {
+    if (view === "favourites") return;
     const fetchStations = async () => {
       setLoading(true);
       try {
@@ -38,14 +36,14 @@ const Radio = () => {
           `https://radio-app-server.vercel.app/api/radio?filter=${filter}${query}`
         );
         const data = await res.json();
-        setStations(data.slice(0, 30));
-      } catch (err) {
-        console.error(err);
+        setStations(data.slice(0, 40));
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
     };
-    if (view === "all") fetchStations();
+    fetchStations();
   }, [filter, country, view]);
 
   const handlePlay = (station) => {
@@ -55,110 +53,125 @@ const Radio = () => {
       return;
     }
     audio.src = station.url_resolved;
-    audio.volume = volume;
     audio.play();
     setCurrent(station);
+  };
+
+  const toggleFavourite = (station) => {
+    const exists = favourites.find((s) => s.stationuuid === station.stationuuid);
+    const updated = exists
+      ? favourites.filter((s) => s.stationuuid !== station.stationuuid)
+      : [...favourites, station];
+    setFavourites(updated);
+    localStorage.setItem("favourites", JSON.stringify(updated));
   };
 
   useEffect(() => {
     audio.volume = volume;
   }, [volume]);
 
-  const toggleFavourite = (station) => {
-    let updated;
-    if (favourites.find((fav) => fav.stationuuid === station.stationuuid)) {
-      updated = favourites.filter((fav) => fav.stationuuid !== station.stationuuid);
-    } else {
-      updated = [...favourites, station];
-    }
-    setFavourites(updated);
-    localStorage.setItem("favourites", JSON.stringify(updated));
-  };
-
-  const displayedStations = view === "favourites" ? favourites : stations;
+  const displayed = view === "favourites" ? favourites : stations;
 
   return (
-    <div className="radio-container">
-      <h1 className="title">🎧 Radio Player</h1>
-      <div className="tabs">
-        <button className={`tab-btn ${view === "all" ? "active" : ""}`} onClick={() => setView("all")}>
-          All Stations
-        </button>
-        <button className={`tab-btn ${view === "favourites" ? "active" : ""}`} onClick={() => setView("favourites")}>
-          ⭐ Favourites
-        </button>
-      </div>
+    <div className="radio-wrapper">
+      <header className="header">
+        <h1 className="brand">RadioSphere</h1>
+        <div className="search-section">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search by country..."
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+          />
+        </div>
+      </header>
 
-      {view === "all" && (
-        <>
-          <div className="search-bar">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search by country..."
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-            />
-          </div>
+      <nav className="nav">
+        <div className="filter-tabs">
+          <button
+            className={view === "all" ? "tab active" : "tab"}
+            onClick={() => setView("all")}
+          >
+            Discover
+          </button>
+          <button
+            className={view === "favourites" ? "tab active" : "tab"}
+            onClick={() => setView("favourites")}
+          >
+            ❤️ Favourites
+          </button>
+        </div>
 
-          <div className="categories">
+        {view === "all" && (
+          <div className="filters">
             {categories.map((cat) => (
               <button
                 key={cat}
-                className={`category-btn ${filter === cat ? "active" : ""}`}
+                className={`filter-btn ${filter === cat ? "active" : ""}`}
                 onClick={() => setFilter(cat)}
               >
                 {cat}
               </button>
             ))}
           </div>
-        </>
-      )}
+        )}
+      </nav>
 
       {loading ? (
-        <div className="loader">Loading stations...</div>
+        <div className="loading">Loading stations...</div>
+      ) : displayed.length === 0 ? (
+        <p className="no-data">No stations found</p>
       ) : (
-        <div className="stations-grid">
-          {displayedStations.length === 0 ? (
-            <p className="no-results">No stations found</p>
-          ) : (
-            displayedStations.map((station) => (
-              <div key={station.stationuuid} className="station-card">
-                <img
-                  src={station.favicon || "/default-radio.png"}
-                  alt={station.name}
-                  className="station-img"
-                />
-                <div className="station-info">
-                  <h3 className="station-name">{station.name}</h3>
-                  <p className="station-country">{station.country}</p>
-                </div>
-                <div className="station-controls">
-                  <button className="play-btn" onClick={() => handlePlay(station)}>
-                    {current?.stationuuid === station.stationuuid ? <FaPause /> : <FaPlay />}
-                  </button>
-                  <FaVolumeUp className="volume-icon" />
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={volume}
-                    onChange={(e) => setVolume(e.target.value)}
-                  />
-                  <button className="fav-btn" onClick={() => toggleFavourite(station)}>
-                    {favourites.find((fav) => fav.stationuuid === station.stationuuid) ? (
-                      <FaHeart color="#ff5a79" />
-                    ) : (
-                      <FaRegHeart />
-                    )}
-                  </button>
-                </div>
+        <div className="grid">
+          {displayed.map((station) => (
+            <div
+              key={station.stationuuid}
+              className={`card ${
+                current?.stationuuid === station.stationuuid ? "playing" : ""
+              }`}
+            >
+              <img
+                src={station.favicon || "/default-radio.png"}
+                alt={station.name}
+                className="cover"
+              />
+              <div className="info">
+                <h3>{station.name}</h3>
+                <p>{station.country}</p>
               </div>
-            ))
-          )}
+              <div className="controls">
+                <button onClick={() => handlePlay(station)}>
+                  {current?.stationuuid === station.stationuuid ? (
+                    <FaPause />
+                  ) : (
+                    <FaPlay />
+                  )}
+                </button>
+                <button onClick={() => toggleFavourite(station)}>
+                  {favourites.find((f) => f.stationuuid === station.stationuuid) ? (
+                    <FaHeart color="#ff6781" />
+                  ) : (
+                    <FaRegHeart />
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <footer className="footer">
+        <FaVolumeUp />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volume}
+          onChange={(e) => setVolume(e.target.value)}
+        />
+      </footer>
     </div>
   );
 };
