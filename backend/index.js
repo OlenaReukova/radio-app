@@ -7,17 +7,24 @@ dotenv.config();
 
 const config = {
   port: process.env.PORT || 5000,
-  defaultTimeout: 5000,
+  defaultTimeout: 10000,
   statusTimeout: 3000,
-  defaultLimit: 30,
+  batchSize: 100,
 };
 
-const createTimeoutFetch = async (url, options = {}, timeout = config.defaultTimeout) => {
+const createTimeoutFetch = async (
+  url,
+  options = {},
+  timeout = config.defaultTimeout
+) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     return await response.json();
   } finally {
@@ -27,12 +34,14 @@ const createTimeoutFetch = async (url, options = {}, timeout = config.defaultTim
 
 const getActiveMirrors = async () => {
   try {
-    const response = await fetch("https://all.api.radio-browser.info/json/servers");
+    const response = await fetch(
+      "https://all.api.radio-browser.info/json/servers"
+    );
     const mirrors = await response.json();
-    return mirrors.map(m => `https://${m.name}`);
+    return mirrors.map((m) => `https://${m.name}`);
   } catch (err) {
-    console.error("Failed to fetch mirrors:", err.message);
-    // fallback на рабочие известные зеркала
+    console.error("⚠️ Failed to fetch mirrors:", err.message);
+    // fallback mirrors
     return [
       "https://de1.api.radio-browser.info",
       "https://de2.api.radio-browser.info",
@@ -42,22 +51,21 @@ const getActiveMirrors = async () => {
 };
 
 const radioService = {
-  async fetchStations(filter = "all", limit = config.defaultLimit) {
+  async fetchStations(filter = "all") {
     const tag = filter === "all" ? "" : filter;
     const mirrors = await getActiveMirrors();
     const errors = [];
 
     for (const mirror of mirrors) {
       try {
-        const url = `${mirror}/json/stations/search?language=english&tag=${tag}&limit=${limit}`;
-        console.log(`Trying API mirror: ${url}`);
-
-        const data = await createTimeoutFetch(url, {
-          headers: { "User-Agent": "RadioApp/1.0", Accept: "application/json" },
-        });
-
-        console.log(`Fetched ${data.length} stations from ${mirror}`);
-        return data;
+        console.log(`🌐 Fetching from mirror: ${mirror}`);
+        const allStations = await this.fetchAllFromMirror(mirror, tag);
+        if (allStations.length > 0) {
+          console.log(
+            `Successfully fetched ${allStations.length} stations from ${mirror}`
+          );
+          return allStations;
+        }
       } catch (error) {
         console.error(`Error with mirror ${mirror}:`, error.message);
         errors.push(`${mirror}: ${error.message}`);
@@ -66,9 +74,46 @@ const radioService = {
 
     throw {
       status: 503,
-      message: "Unable to fetch radio stations from any API mirror",
+      message: "Unable to fetch working stations from any API mirror",
       errors,
     };
+  },
+
+  async fetchAllFromMirror(mirror, tag) {
+    let offset = 0;
+    let allStations = [];
+    let batchCount = 0;
+
+    while (true) {
+      const baseUrl = `${mirror}/json/stations`;
+      const params = new URLSearchParams({
+        hidebroken: "true",
+        limit: config.batchSize.toString(),
+        offset: offset.toString(),
+      });
+      if (tag) params.append("tag", tag);
+      params.append("language", "english");
+
+      const url = `${baseUrl}?${params.toString()}`;
+
+      console.log(
+        `➡️ Fetching batch ${++batchCount} from ${mirror} (offset: ${offset})`
+      );
+
+      const data = await createTimeoutFetch(url, {
+        headers: {
+          "User-Agent": "RadioApp/1.0",
+          Accept: "application/json",
+        },
+      });
+
+      if (!data || data.length === 0) break;
+
+      allStations = [...allStations, ...data];
+      offset += config.batchSize;
+    }
+
+    return allStations;
   },
 
   async checkStatus() {
@@ -112,8 +157,8 @@ app.get("/", (_, res) => res.send("Welcome to the Radio App API!"));
 
 app.get("/api/radio", async (req, res, next) => {
   try {
-    const { filter = "all", limit = config.defaultLimit } = req.query;
-    const data = await radioService.fetchStations(filter, limit);
+    const { filter = "all" } = req.query;
+    const data = await radioService.fetchStations(filter);
     res.json(data);
   } catch (err) {
     next(err);
@@ -132,7 +177,7 @@ app.get("/api/status", async (_, res, next) => {
 app.use(errorHandler);
 
 app.listen(config.port, () => {
-  console.log(`✅ Server running on port ${config.port}`);
+  console.log(`Server running on port ${config.port}`);
 });
 
 export default app;
