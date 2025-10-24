@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
+import Redis from "ioredis";
 import { createClient } from "@libsql/client";
 
 dotenv.config();
@@ -9,9 +10,13 @@ dotenv.config();
 const config = {
   port: process.env.PORT || 5000,
   defaultTimeout: 10000,
-  statusTimeout: 3000,
   batchSize: 200,
 };
+
+const redis = new Redis(process.env.REDIS_URL, {
+  password: process.env.REDIS_TOKEN,
+  tls: { rejectUnauthorized: false },
+});
 
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -84,7 +89,6 @@ const radioService = {
         console.error(`Mirror ${mirror} failed:`, err.message);
       }
     }
-
     return [];
   },
 
@@ -183,23 +187,29 @@ app.options("*", cors());
 await initDB();
 
 const { rows } = await db.execute("SELECT COUNT(*) AS count FROM stations");
-
 if (rows[0].count === 0) {
   console.log("First run: fetching and saving all stations...");
   const stations = await radioService.fetchAllStations("all");
   await radioService.saveStationsToDB(stations);
-} else {
-  console.log(
-    `Database already has ${rows[0].count} stations. Skipping fetch.`
-  );
 }
-
-app.get("/", (_, res) => res.send("Welcome to the Radio App API with Turso"));
 
 app.get("/api/radio", async (req, res, next) => {
   try {
-    const { country, genre } = req.query;
+    const { country = "All countries", genre = "all" } = req.query;
+    const cacheKey = `radio:${country}:${genre}`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log("✅ Cache HIT:", cacheKey);
+      res.setHeader("X-Cache", "HIT");
+      return res.json(JSON.parse(cached));
+    }
+
     const data = await radioService.getStationsFromDB({ country, genre });
+
+    await redis.set(cacheKey, JSON.stringify(data), "EX", 3600);
+    res.setHeader("X-Cache", "MISS");
+
     res.json(data);
   } catch (err) {
     next(err);
@@ -216,9 +226,12 @@ app.get("/api/refresh", async (req, res) => {
     console.log("Manual or cron refresh triggered...");
     const stations = await radioService.fetchAllStations("all");
     await radioService.saveStationsToDB(stations);
-    res.json({ ok: true, message: "Stations refreshed successfully" });
+
+    await redis.flushall();
+
+    res.json({ ok: true, message: "Stations refreshed and cache cleared" });
   } catch (err) {
-    console.error("Error during cron refresh:", err);
+    console.error("Error during refresh:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });

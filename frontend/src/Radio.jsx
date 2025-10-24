@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import AudioPlayer, { RHAP_UI } from "react-h5-audio-player";
-import "react-h5-audio-player/lib/styles.css";
+import { useEffect, useState, useCallback } from "react";
+import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
 
 export default function Radio() {
@@ -9,11 +8,11 @@ export default function Radio() {
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
   const [currentPage, setCurrentPage] = useState(1);
-  const [playingStation, setPlayingStation] = useState(null);
+
+  const [activeSrc, setActiveSrc] = useState(null);
 
   const stationsPerPage = 20;
 
-  // ✅ Fetch stations whenever filters change
   useEffect(() => {
     setupApi(stationFilter, selectedCountry).then((data) => {
       setStations(data);
@@ -30,17 +29,6 @@ export default function Radio() {
     });
   }, [stationFilter, selectedCountry]);
 
-  // ✅ Only one audio element plays at a time
-  useEffect(() => {
-    const audios = document.querySelectorAll("audio");
-    audios.forEach((audio) => {
-      if (!audio.src.includes(playingStation)) {
-        audio.pause();
-      }
-    });
-  }, [playingStation]);
-
-  // ✅ Fetch data from backend
   const setupApi = async (stationFilter, selectedCountry) => {
     try {
       const baseUrl =
@@ -64,6 +52,14 @@ export default function Radio() {
       return [];
     }
   };
+
+  const handlePlay = useCallback((src) => {
+    setActiveSrc(src);
+  }, []);
+
+  const handleError = useCallback(() => {
+    alert("Станция недоступна");
+  }, []);
 
   const filters = [
     "all",
@@ -223,27 +219,13 @@ export default function Radio() {
                   </div>
                 </div>
 
-                {/* ✅ Built-in Audio Player (no extra button) */}
-                <AudioPlayer
+                {/* Custom Audio Player */}
+                <CustomAudioPlayer
                   key={station.stationuuid}
-                  className="player"
                   src={station.url_resolved}
-                  showJumpControls={false}
-                  layout="stacked"
-                  customVolumeControls={[RHAP_UI.VOLUME]}
-                  customProgressBarSection={[]}
-                  customControlsSection={["MAIN_CONTROLS", "VOLUME_CONTROLS"]}
-                  autoPlayAfterSrcChange={true}
-                  autoPlay={false}
-                  onPlay={() => setPlayingStation(station.stationuuid)}
-                  onError={() =>
-                    console.error("Audio load error for:", station.name)
-                  }
-                  style={{
-                    marginTop: "0.5rem",
-                    borderRadius: "10px",
-                    background: "#2a2344",
-                  }}
+                  isActive={activeSrc === station.url_resolved}
+                  onPlay={handlePlay}
+                  onError={handleError}
                 />
               </div>
             );
