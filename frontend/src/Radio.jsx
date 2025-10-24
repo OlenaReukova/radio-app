@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import AudioPlayer, { RHAP_UI } from "react-h5-audio-player";
-import "react-h5-audio-player/lib/styles.css";
+import { useEffect, useState, useCallback } from "react";
+import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
 
 export default function Radio() {
@@ -8,9 +7,14 @@ export default function Radio() {
   const [stationFilter, setStationFilter] = useState("all");
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [activeSrc, setActiveSrc] = useState(null);
+
+  const stationsPerPage = 20;
 
   useEffect(() => {
-    setupApi(stationFilter).then((data) => {
+    setupApi(stationFilter, selectedCountry).then((data) => {
       setStations(data);
       const uniqueCountries = [
         ...new Set(
@@ -21,16 +25,26 @@ export default function Radio() {
         ),
       ];
       setCountries(["All countries", ...uniqueCountries]);
+      setCurrentPage(1);
     });
-  }, [stationFilter]);
+  }, [stationFilter, selectedCountry]);
 
-  const setupApi = async (stationFilter) => {
+  const setupApi = async (stationFilter, selectedCountry) => {
     try {
       const baseUrl =
         import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
-      const response = await fetch(
-        `${baseUrl}/api/radio?filter=${stationFilter}`
-      );
+
+      const params = new URLSearchParams();
+      if (stationFilter && stationFilter !== "all") {
+        params.append("genre", stationFilter);
+      }
+      if (selectedCountry && selectedCountry !== "All countries") {
+        params.append("country", selectedCountry);
+      }
+
+      const response = await fetch(`${baseUrl}/api/radio?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch radio stations");
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -38,6 +52,14 @@ export default function Radio() {
       return [];
     }
   };
+
+  const handlePlay = useCallback((src) => {
+    setActiveSrc(src);
+  }, []);
+
+  const handleError = useCallback(() => {
+    alert("Станция недоступна");
+  }, []);
 
   const filters = [
     "all",
@@ -62,6 +84,21 @@ export default function Radio() {
     return station.country === selectedCountry;
   });
 
+  const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+  const startIndex = (currentPage - 1) * stationsPerPage;
+  const currentStations = filteredStations.slice(
+    startIndex,
+    startIndex + stationsPerPage
+  );
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
   return (
     <div
       className="radio"
@@ -73,12 +110,12 @@ export default function Radio() {
         padding: "1rem",
       }}
     >
-      {/* Left sidebar country dropdown */}
+      {/* Sidebar */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          width: "200px",
+          width: "220px",
           background: "#1f1f2e",
           borderRadius: "8px",
           padding: "1rem",
@@ -135,12 +172,12 @@ export default function Radio() {
         </div>
       </div>
 
-      {/* Stations list */}
+      {/* Main content */}
       <div className="stations" style={{ flex: 1 }}>
-        {filteredStations.length === 0 ? (
+        {currentStations.length === 0 ? (
           <p style={{ color: "#ccc" }}>No stations found.</p>
         ) : (
-          filteredStations.map((station, index) => {
+          currentStations.map((station, index) => {
             const shortName =
               station.name.length > 36
                 ? station.name.slice(0, 36) + "..."
@@ -167,7 +204,6 @@ export default function Radio() {
                   }}
                 >
                   <img
-                    className="logo"
                     src={station.favicon || defaultImage}
                     alt="station logo"
                     onError={setDefaultSrc}
@@ -183,26 +219,64 @@ export default function Radio() {
                   </div>
                 </div>
 
-                {station.url_resolved ? (
-                  <AudioPlayer
-                    className="player"
-                    src={station.url_resolved}
-                    showJumpControls={false}
-                    layout="stacked"
-                    customVolumeControls={[RHAP_UI.VOLUME]}
-                    customProgressBarSection={[]}
-                    customControlsSection={["MAIN_CONTROLS", "VOLUME_CONTROLS"]}
-                    autoPlayAfterSrcChange={false}
-                    style={{ marginTop: "0.5rem" }}
-                  />
-                ) : (
-                  <p style={{ fontSize: "0.9rem", opacity: 0.7 }}>
-                    Stream URL not available
-                  </p>
-                )}
+                {/* Custom Audio Player */}
+                <CustomAudioPlayer
+                  key={station.stationuuid}
+                  src={station.url_resolved}
+                  isActive={activeSrc === station.url_resolved}
+                  onPlay={handlePlay}
+                  onError={handleError}
+                />
               </div>
             );
           })
+        )}
+
+        {/* Pagination */}
+        {filteredStations.length > stationsPerPage && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: "1rem",
+              gap: "1rem",
+            }}
+          >
+            <button
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+              style={{
+                background: "#444",
+                color: "#fff",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "5px",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                opacity: currentPage === 1 ? 0.5 : 1,
+              }}
+            >
+              ⬅ Prev
+            </button>
+            <span style={{ color: "#fff" }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+              style={{
+                background: "#444",
+                color: "#fff",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "5px",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                opacity: currentPage === totalPages ? 0.5 : 1,
+              }}
+            >
+              Next ➡
+            </button>
+          </div>
         )}
       </div>
     </div>

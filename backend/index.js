@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
+import Redis from "ioredis";
 import { createClient } from "@libsql/client";
 
 dotenv.config();
@@ -9,10 +10,13 @@ dotenv.config();
 const config = {
   port: process.env.PORT || 5000,
   defaultTimeout: 10000,
-  statusTimeout: 3000,
   batchSize: 200,
-  refreshInterval: 1000 * 60 * 60 * 24,
 };
+
+const redis = new Redis(process.env.REDIS_URL, {
+  password: process.env.REDIS_TOKEN,
+  tls: { rejectUnauthorized: false },
+});
 
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -30,8 +34,12 @@ const initDB = async () => {
       favicon TEXT
     )
   `);
-  console.log("🗄️ Database initialised (Turso SQLite)");
+  console.log("Database initialised (Turso SQLite)");
 };
+
+function isValidUrl(url) {
+  return typeof url === "string" && /^https?:\/\/[^\s]+$/.test(url);
+}
 
 const createTimeoutFetch = async (
   url,
@@ -72,6 +80,7 @@ const radioService = {
   async fetchAllStations(filter = "all") {
     const tag = filter === "all" ? "" : filter;
     const mirrors = await getActiveMirrors();
+
     for (const mirror of mirrors) {
       try {
         const stations = await this.fetchAllFromMirror(mirror, tag);
@@ -95,37 +104,48 @@ const radioService = {
         offset: offset.toString(),
       });
       if (tag) params.append("tag", tag);
+
       const url = `${mirror}/json/stations?${params.toString()}`;
-      console.log(`➡️ Fetching from ${mirror} offset=${offset}`);
+      console.log(`Fetching from ${mirror} (offset=${offset})`);
+
       const data = await createTimeoutFetch(url);
       if (!data || data.length === 0) break;
+
       const newOnes = data.filter((s) => !seen.has(s.stationuuid));
       if (newOnes.length === 0) break;
+
       newOnes.forEach((s) => seen.add(s.stationuuid));
       allStations = [...allStations, ...newOnes];
       offset += config.batchSize;
     }
-    console.log(`✅ Got ${allStations.length} stations total.`);
+
+    console.log(`Fetched ${allStations.length} stations from ${mirror}`);
     return allStations;
   },
 
   async saveStationsToDB(stations) {
-    console.log(`💾 Saving ${stations.length} stations to DB...`);
+    console.log(`Saving ${stations.length} stations to DB...`);
+
     const insertStmt = `
       INSERT OR REPLACE INTO stations 
       (stationuuid, name, country, tags, url_resolved, favicon)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
+
     for (const s of stations) {
+      if (!isValidUrl(s.url_resolved)) continue;
+      if (s.url_resolved.includes(".m3u8")) continue;
+
       await db.execute(insertStmt, [
         s.stationuuid,
         s.name || "",
         s.country || "",
         s.tags || "",
         s.url_resolved || "",
-        s.favicon || "",
+        isValidUrl(s.favicon) ? s.favicon : "",
       ]);
     }
+
     console.log("Stations saved to DB");
   },
 
@@ -134,18 +154,27 @@ const radioService = {
     const values = [];
 
     if (filters.country) {
-      conditions.push("LOWER(country) = LOWER(?)");
+      conditions.push("LOWER(TRIM(country)) = LOWER(TRIM(?))");
       values.push(filters.country);
     }
+
     if (filters.genre) {
-      conditions.push("LOWER(tags) LIKE LOWER(?)");
+      conditions.push("LOWER(TRIM(tags)) LIKE LOWER(TRIM(?))");
       values.push(`%${filters.genre}%`);
     }
 
     const whereClause = conditions.length
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
-    const sql = `SELECT * FROM stations ${whereClause} LIMIT 500`;
+
+    const sql = `
+      SELECT *
+      FROM stations
+      ${whereClause}
+      ORDER BY name ASC
+      LIMIT 500
+    `;
+
     const result = await db.execute(sql, values);
     return result.rows || [];
   },
@@ -155,22 +184,32 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "OPTIONS"] }));
 app.options("*", cors());
 
-const refreshStations = async () => {
-  console.log("♻️ Refreshing station data...");
+await initDB();
+
+const { rows } = await db.execute("SELECT COUNT(*) AS count FROM stations");
+if (rows[0].count === 0) {
+  console.log("First run: fetching and saving all stations...");
   const stations = await radioService.fetchAllStations("all");
   await radioService.saveStationsToDB(stations);
-};
-initDB().then(refreshStations);
-
-await initDB();
-console.log(" Database initialised. Monthly refresh handled by Vercel Cron.");
-
-app.get("/", (_, res) => res.send("Welcome to the Radio App API with Turso "));
+}
 
 app.get("/api/radio", async (req, res, next) => {
   try {
-    const { country, genre } = req.query;
+    const { country = "All countries", genre = "all" } = req.query;
+    const cacheKey = `radio:${country}:${genre}`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log("✅ Cache HIT:", cacheKey);
+      res.setHeader("X-Cache", "HIT");
+      return res.json(JSON.parse(cached));
+    }
+
     const data = await radioService.getStationsFromDB({ country, genre });
+
+    await redis.set(cacheKey, JSON.stringify(data), "EX", 3600);
+    res.setHeader("X-Cache", "MISS");
+
     res.json(data);
   } catch (err) {
     next(err);
@@ -179,17 +218,20 @@ app.get("/api/radio", async (req, res, next) => {
 
 app.get("/api/refresh", async (req, res) => {
   const authHeader = req.headers.authorization;
-
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
-    console.log("Monthly refresh triggered via Vercel Cron...");
-    await refreshStations();
-    res.json({ ok: true, message: "Stations refreshed successfully" });
+    console.log("Manual or cron refresh triggered...");
+    const stations = await radioService.fetchAllStations("all");
+    await radioService.saveStationsToDB(stations);
+
+    await redis.flushall();
+
+    res.json({ ok: true, message: "Stations refreshed and cache cleared" });
   } catch (err) {
-    console.error("Error during cron refresh:", err);
+    console.error("Error during refresh:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
