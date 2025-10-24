@@ -2,7 +2,8 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
+
 import { createClient } from "@libsql/client";
 
 dotenv.config();
@@ -13,9 +14,9 @@ const config = {
   batchSize: 200,
 };
 
-const redis = new Redis(process.env.REDIS_URL, {
-  password: process.env.REDIS_TOKEN,
-  tls: { rejectUnauthorized: false },
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 const db = createClient({
