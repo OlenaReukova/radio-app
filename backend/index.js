@@ -3,7 +3,7 @@ import cors from "cors";
 import { config, ENV } from "./config.js";
 import { initDB } from "./db.js";
 import { redis } from "./redis.js";
-import { radioService } from "./radioService.js";
+import { radioService } from "./radioService.instance.js";
 
 const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "OPTIONS"] }));
