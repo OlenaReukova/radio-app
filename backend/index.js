@@ -15,8 +15,8 @@ const config = {
 };
 
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  url: process.env.REDIS_URL,
+  token: process.env.REDIS_TOKEN,
 });
 
 const db = createClient({
@@ -196,24 +196,41 @@ if (rows[0].count === 0) {
 
 app.get("/api/radio", async (req, res, next) => {
   try {
-    const { country = "All countries", genre = "all" } = req.query;
-    const cacheKey = `radio:${country}:${genre}`;
+    let { country = "All countries", genre = "all" } = req.query;
 
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      console.log("✅ Cache HIT:", cacheKey);
-      res.setHeader("X-Cache", "HIT");
-      return res.json(JSON.parse(cached));
+    const filters = {};
+    if (country && country != "All countries") filters.country = country;
+    if (genre && genre !== "all") filters.genre = genre;
+
+    const cacheKey = `radio:${filters.country ?? "All"}:${
+      filters.genre ?? "All"
+    }`;
+
+    const cachedRaw = await redis.get(cacheKey);
+    if (cachedRaw != null) {
+      try {
+        const cached =
+          typeof cachedRaw == "string" ? JSON.parse(cachedRaw) : cachedRaw;
+
+        if (Array.isArray(cached)) {
+          console.log("Cash HIT:", cacheKey);
+          res.setHeader("X-Cache", "HIT");
+          return res.json(cached);
+        }
+        await redis.del(cacheKey);
+      } catch {
+        await redis.del(cacheKey);
+      }
     }
+    const data = await radioService.getStationsFromDB(filters);
 
-    const data = await radioService.getStationsFromDB({ country, genre });
+    await redis.set(cacheKey, JSON.stringify(data), { ex: 3600 });
 
-    await redis.set(cacheKey, JSON.stringify(data), "EX", 3600);
     res.setHeader("X-Cache", "MISS");
-
-    res.json(data);
+    return res.json(data);
   } catch (err) {
-    next(err);
+    console.error("Route error (/api/radio):", err);
+    return next(err);
   }
 });
 
