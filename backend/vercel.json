@@ -5,10 +5,7 @@
   "crons": [
     {
       "path": "/api/refresh",
-      "schedule": "0 0 1 * *",
-      "headers": {
-        "Authorization": "Bearer ${CRON_SECRET}"
-      }
+      "schedule": "0 0 1 * *"
     }
   ]
 }

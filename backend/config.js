@@ -8,21 +8,16 @@ const env = {
   REDIS_TOKEN: process.env.REDIS_TOKEN,
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
   TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
-  CRON_SECRET: process.env.CRON_SECRET,
   VERCEL: process.env.VERCEL || "",
 };
 
-[
-  "REDIS_URL",
-  "REDIS_TOKEN",
-  "TURSO_DATABASE_URL",
-  "TURSO_AUTH_TOKEN",
-  "CRON_SECRET",
-].forEach((key) => {
-  if (!env[key]) {
-    throw new Error(`Missing env: ${key}`);
+["REDIS_URL", "REDIS_TOKEN", "TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"].forEach(
+  (key) => {
+    if (!env[key]) {
+      throw new Error(`Missing env: ${key}`);
+    }
   }
-});
+);
 
 export const config = {
   port: Number(env.PORT),
