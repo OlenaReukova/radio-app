@@ -1,10 +1,4 @@
-import { createClient } from "@libsql/client";
-import { ENV } from "./config.js";
-
-export const db = createClient({
-  url: ENV.TURSO_DATABASE_URL,
-  authToken: ENV.TURSO_AUTH_TOKEN,
-});
+import { db } from "./db.js";
 
 export async function initDB() {
   await db.execute(`
@@ -18,5 +12,5 @@ export async function initDB() {
     )
     `);
 
-  console.log("TTurso Database initialised");
+  console.log("Turso Database initialised");
 }

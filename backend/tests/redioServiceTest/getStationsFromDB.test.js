@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, jest } from "@jest/globals";
-import { createRadioService } from "../../radioService.js";
+import { createRadioService } from "../../src/services/radioService.js";
 
 let fetchMock, dbMock, loggerMock, config, service;
 

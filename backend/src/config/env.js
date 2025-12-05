@@ -19,10 +19,4 @@ const env = {
   }
 );
 
-export const config = {
-  port: Number(env.PORT),
-  defaultTimeout: 10000,
-  batchSize: 200,
-};
-
 export const ENV = env;
