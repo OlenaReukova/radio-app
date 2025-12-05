@@ -60,22 +60,19 @@ app.get("/api/radio", async (req, res, next) => {
 });
 
 app.get("/api/refresh", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${ENV.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
   try {
-    console.log("Manual or cron refresh triggered...");
     const stations = await radioService.fetchAllStations("all");
     await radioService.saveStationsToDB(stations);
-
+    //clear redis cache
     await redis.flushall();
 
     res.json({ ok: true, message: "Stations refreshed and cache cleared" });
   } catch (err) {
     console.error("Error during refresh:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    res.status(500).json({
+      ok: false,
+      error: err.message,
+    });
   }
 });
 
