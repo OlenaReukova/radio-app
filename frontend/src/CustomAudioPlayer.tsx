@@ -2,9 +2,21 @@ import React, { useRef, useCallback } from "react";
 import { Howl, Howler } from "howler";
 import PropTypes from "prop-types";
 
-function CustomAudioPlayer({ src, isActive, onPlay, onError }) {
-  const [volume, setVolume] = React.useState(1);
-  const soundRef = useRef(null);
+type CustomAudioPlayerProps = {
+  src: string;
+  isActive: boolean;
+  onPlay: (src: string | null) => void;
+  onError?: () => void;
+};
+
+function CustomAudioPlayer({
+  src,
+  isActive,
+  onPlay,
+  onError,
+}: CustomAudioPlayerProps): JSX.Element {
+  const [volume, setVolume] = React.useState<number>(1);
+  const soundRef = useRef<Howl | null>(null);
 
   const togglePlay = useCallback(() => {
     Howler.stop();
@@ -25,11 +37,11 @@ function CustomAudioPlayer({ src, isActive, onPlay, onError }) {
           volume,
           format: ["mp3", "aac", "ogg"],
           onloaderror: () => {
-            console.error("Ошибка загрузки потока:", src);
+            console.error("Error loading the stream:", src);
             onError?.();
           },
           onplayerror: () => {
-            console.error("Ошибка воспроизведения потока:", src);
+            console.error("Error playing the stream:", src);
             onError?.();
           },
           onend: () => onPlay(null),
@@ -46,7 +58,7 @@ function CustomAudioPlayer({ src, isActive, onPlay, onError }) {
     }
   }, [src, volume, isActive, onPlay, onError]);
 
-  const handleVolume = useCallback((e) => {
+  const handleVolume = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newVol = parseFloat(e.target.value);
     setVolume(newVol);
     soundRef.current?.volume(newVol);

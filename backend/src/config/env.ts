@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+type EnvKeys = keyof typeof env;
+
 const env = {
   PORT: process.env.PORT || "5000",
   REDIS_URL: process.env.REDIS_URL,
@@ -13,7 +15,7 @@ const env = {
 
 ["REDIS_URL", "REDIS_TOKEN", "TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"].forEach(
   (key) => {
-    if (!env[key]) {
+    if (!env[key as EnvKeys]) {
       throw new Error(`Missing env: ${key}`);
     }
   }

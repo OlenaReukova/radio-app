@@ -1,15 +1,23 @@
 import { useEffect, useState, useCallback } from "react";
-import CustomAudioPlayer from "./CustomAudioPlayer";
+import CustomAudioPlayer from "./CustomAudioPlayer.js";
 import defaultImage from "./radio.avif";
 
+type Station = {
+  stationuuid: string;
+  name: string;
+  country: string;
+  favicon?: string;
+  url_resolved: string;
+};
+
 export default function Radio() {
-  const [stations, setStations] = useState([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [stationFilter, setStationFilter] = useState("all");
-  const [countries, setCountries] = useState([]);
+  const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [activeSrc, setActiveSrc] = useState(null);
+  const [activeSrc, setActiveSrc] = useState<string | null>(null);
 
   const stationsPerPage = 20;
 
@@ -29,7 +37,10 @@ export default function Radio() {
     });
   }, [stationFilter, selectedCountry]);
 
-  const setupApi = async (stationFilter, selectedCountry) => {
+  const setupApi = async (
+    stationFilter: string,
+    selectedCountry: string
+  ): Promise<Station[]> => {
     try {
       const baseUrl =
         import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
@@ -45,7 +56,7 @@ export default function Radio() {
       const response = await fetch(`${baseUrl}/api/radio?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch radio stations");
 
-      const data = await response.json();
+      const data = (await response.json()) as Station[];
       return data;
     } catch (error) {
       console.error("Error fetching data", error);
@@ -53,7 +64,7 @@ export default function Radio() {
     }
   };
 
-  const handlePlay = useCallback((src) => {
+  const handlePlay = useCallback((src: string | null) => {
     setActiveSrc(src);
   }, []);
 
@@ -75,8 +86,8 @@ export default function Radio() {
     "rock",
   ];
 
-  const setDefaultSrc = (event) => {
-    event.target.src = defaultImage;
+  const setDefaultSrc = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.src = defaultImage;
   };
 
   const filteredStations = stations.filter((station) => {

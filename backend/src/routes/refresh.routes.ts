@@ -13,7 +13,8 @@ router.get("/", async (req, res) => {
 
     res.json({ ok: true, message: "Stations refreshed and cache cleared" });
   } catch (err) {
-    res.status(500).json({ ok: false, error: err.message });
+    if (err instanceof Error)
+      res.status(500).json({ ok: false, error: err.message });
   }
 });
 

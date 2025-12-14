@@ -47,7 +47,7 @@ describe("saveStationsToDB", () => {
     // Assert
     expect(dbMock.execute).toHaveBeenCalledTimes(1);
 
-    const [sql, params] = dbMock.execute.mock.calls[0];
+    const params = dbMock.execute.mock.calls[0][1];
 
     expect(params[0]).toBe("1");
     expect(params[4]).toBe("https://good.stream/1");
