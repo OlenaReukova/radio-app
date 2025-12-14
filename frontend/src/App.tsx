@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import Radio from "./Radio";
 import Hero from "./Hero";
 import Footer from "./Footer";
+import { Toaster } from "sonner";
 
 function App() {
   useEffect(() => {
@@ -17,12 +18,15 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <h1>Radio Player</h1>
-      <Hero />
-      <Radio />
-      <Footer />
-    </div>
+    <>
+      <Toaster richColors />
+      <div className="App">
+        <h1>Radio Player</h1>
+        <Hero />
+        <Radio />
+        <Footer />
+      </div>
+    </>
   );
 }
 
