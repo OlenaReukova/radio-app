@@ -2,12 +2,25 @@ import { Router } from "express";
 import { redis } from "../redis/redisClient.js";
 import { radioService } from "../services/radioService.instance.js";
 
+type Filters = {
+  country?: string;
+  genre?: string;
+};
+
 const router = Router();
+
+function getQueryParam(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  return undefined;
+}
+
 router.get("/", async (req, res, next) => {
   try {
-    let { country = "All countries", genre = "all" } = req.query;
+    const country = getQueryParam(req.query.country) ?? "All countries";
+    const genre = getQueryParam(req.query.genre) ?? "all";
 
-    const filters = {};
+    const filters: Filters = {};
+
     if (country && country !== "All countries") filters.country = country;
     if (genre && genre !== "all") filters.genre = genre;
 

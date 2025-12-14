@@ -1,12 +1,44 @@
-export function createRadioService({ fetch, db, config, logger = console }) {
-  function isValidUrl(url) {
+type Filters = {
+  country?: string;
+  genre?: string;
+};
+
+type Station = {
+  stationuuid: string;
+  name?: string;
+  country?: string;
+  tags?: string;
+  url_resolved?: string;
+  favicon?: string;
+};
+
+type RadioServiceDeps = {
+  fetch: typeof fetch;
+  db: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    execute: (sql: string, params?: unknown[]) => Promise<any>;
+  };
+  config: {
+    batchSize: number;
+    defaultTimeout: number;
+  };
+  logger?: Console;
+};
+
+export function createRadioService({
+  fetch,
+  db,
+  config,
+  logger = console,
+}: RadioServiceDeps) {
+  function isValidUrl(url: unknown): url is string {
     return typeof url === "string" && /^https?:\/\/[^\s]+$/.test(url);
   }
 
   async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = config.defaultTimeout
+    url: string,
+    options: RequestInit = {},
+    timeout: number = config.defaultTimeout
   ) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -30,7 +62,7 @@ export function createRadioService({ fetch, db, config, logger = console }) {
       const mirrors = await fetchWithTimeout(
         "https://all.api.radio-browser.info/json/servers"
       );
-      return mirrors.map((m) => `https://${m.name}`);
+      return mirrors.map((m: { name: string }) => `https://${m.name}`);
     } catch {
       return [
         "https://de1.api.radio-browser.info",
@@ -49,16 +81,20 @@ export function createRadioService({ fetch, db, config, logger = console }) {
           const stations = await this.fetchAllFromMirror(mirror, tag);
           if (stations.length > 0) return stations;
         } catch (err) {
-          console.error(`Mirror ${mirror} failed:`, err.message);
+          if (err instanceof Error) {
+            logger.error(`Mirror ${mirror} failed:`, err.message);
+          } else {
+            logger.error(`Mirror ${mirror} failed`);
+          }
         }
       }
       return [];
     },
 
-    async fetchAllFromMirror(mirror, tag) {
+    async fetchAllFromMirror(mirror: string, tag: string) {
       let offset = 0;
-      let allStations = [];
-      const seen = new Set();
+      let allStations: Station[] = [];
+      const seen = new Set<string>();
 
       while (true) {
         const params = new URLSearchParams({
@@ -74,10 +110,10 @@ export function createRadioService({ fetch, db, config, logger = console }) {
         const data = await fetchWithTimeout(url);
         if (!data || data.length === 0) break;
 
-        const newOnes = data.filter((s) => !seen.has(s.stationuuid));
+        const newOnes = data.filter((s: Station) => !seen.has(s.stationuuid));
         if (newOnes.length === 0) break;
 
-        newOnes.forEach((s) => seen.add(s.stationuuid));
+        newOnes.forEach((s: Station) => seen.add(s.stationuuid));
         allStations = allStations.concat(newOnes);
         offset += config.batchSize;
       }
@@ -86,7 +122,7 @@ export function createRadioService({ fetch, db, config, logger = console }) {
       return allStations;
     },
 
-    async saveStationsToDB(stations) {
+    async saveStationsToDB(stations: Station[]) {
       console.log(`Saving ${stations.length} stations to DB...`);
 
       const insertStmt = `
@@ -112,7 +148,7 @@ export function createRadioService({ fetch, db, config, logger = console }) {
       console.log("Stations saved to DB");
     },
 
-    async getStationsFromDB(filters = {}) {
+    async getStationsFromDB(filters: Filters = {}) {
       const conditions = [];
       const values = [];
 
