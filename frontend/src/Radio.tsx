@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import CustomAudioPlayer from "./CustomAudioPlayer.js";
+import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
 
 type Station = {

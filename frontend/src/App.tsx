@@ -1,9 +1,8 @@
-import "./App.css";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
-import Radio from "./Radio.js";
-import Hero from "./Hero.js";
-import Footer from "./Footer.js";
+import Radio from "./Radio";
+import Hero from "./Hero";
+import Footer from "./Footer";
 
 function App() {
   useEffect(() => {
