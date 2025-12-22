@@ -22,7 +22,6 @@ export function AddToQueueButton({
       variant="ghost"
       size="md"
       arial-label="Add to queue"
-      title="Add to queue"
       className={cn(
         //Icon Butttton (Glass)
         "flex items-center justify-center",
