@@ -6,6 +6,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
+        glass: "btn-glass",
         primary: "btn-premium",
         secondary: "btn-outline-premium",
         ghost: "btn-ghost",
@@ -19,7 +20,7 @@ export const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "primary",
+      variant: "glass",
       size: "md",
     },
   }
