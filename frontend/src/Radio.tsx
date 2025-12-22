@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
+import { StationCard } from "./components/organisms/StationCard";
 
 type Station = {
   stationuuid: string;
@@ -16,14 +17,17 @@ export default function Radio() {
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
 
   const stationsPerPage = 20;
 
+  // =========================
+  // DATA FETCHING
+  // =========================
   useEffect(() => {
     setupApi(stationFilter, selectedCountry).then((data) => {
       setStations(data);
+
       const uniqueCountries = [
         ...new Set(
           data
@@ -32,38 +36,37 @@ export default function Radio() {
             .sort()
         ),
       ];
+
       setCountries(["All countries", ...uniqueCountries]);
       setCurrentPage(1);
     });
   }, [stationFilter, selectedCountry]);
 
   const setupApi = async (
-    stationFilter: string,
-    selectedCountry: string
+    filter: string,
+    country: string
   ): Promise<Station[]> => {
     try {
       const baseUrl =
         import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
       const params = new URLSearchParams();
-      if (stationFilter && stationFilter !== "all") {
-        params.append("genre", stationFilter);
-      }
-      if (selectedCountry && selectedCountry !== "All countries") {
-        params.append("country", selectedCountry);
-      }
+      if (filter !== "all") params.append("genre", filter);
+      if (country !== "All countries") params.append("country", country);
 
       const response = await fetch(`${baseUrl}/api/radio?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch radio stations");
+      if (!response.ok) throw new Error("Failed to fetch stations");
 
-      const data = (await response.json()) as Station[];
-      return data;
+      return (await response.json()) as Station[];
     } catch (error) {
-      console.error("Error fetching data", error);
+      console.error(error);
       return [];
     }
   };
 
+  // =========================
+  // AUDIO CONTROL
+  // =========================
   const handlePlay = useCallback((src: string | null) => {
     setActiveSrc(src);
   }, []);
@@ -72,6 +75,9 @@ export default function Radio() {
     alert("Станция недоступна");
   }, []);
 
+  // =========================
+  // FILTERING & PAGINATION
+  // =========================
   const filters = [
     "all",
     "classical",
@@ -86,10 +92,6 @@ export default function Radio() {
     "rock",
   ];
 
-  const setDefaultSrc = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    event.currentTarget.src = defaultImage;
-  };
-
   const filteredStations = stations.filter((station) => {
     if (selectedCountry === "All countries") return true;
     return station.country === selectedCountry;
@@ -102,194 +104,113 @@ export default function Radio() {
     startIndex + stationsPerPage
   );
 
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
+  // =========================
+  // RENDER
+  // =========================
   return (
-    <div
-      className="radio"
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
-        gap: "1rem",
-        padding: "1rem",
-      }}
-    >
-      {/* Sidebar */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "220px",
-          background: "#1f1f2e",
-          borderRadius: "8px",
-          padding: "1rem",
-          color: "#fff",
-        }}
-      >
-        <h3 style={{ marginBottom: "0.5rem", fontSize: "1.1rem" }}>
-          🌍 Country
-        </h3>
+    <section className="flex gap-6 p-6">
+      {/* ================= SIDEBAR ================= */}
+      <aside className="hidden md:block w-56 glass-effect rounded-xl p-4">
+        <h3 className="text-lg mb-2">🌍 Country</h3>
+
         <select
           value={selectedCountry}
           onChange={(e) => setSelectedCountry(e.target.value)}
-          style={{
-            padding: "0.5rem",
-            borderRadius: "5px",
-            background: "#2b2b3d",
-            color: "#fff",
-            border: "1px solid #555",
-            marginBottom: "1rem",
-          }}
+          className="w-full mb-4 bg-white/5 border border-white/10 rounded-lg p-2 text-white"
         >
-          {countries.map((country, index) => (
-            <option key={index} value={country}>
+          {countries.map((country) => (
+            <option key={country} value={country}>
               {country}
             </option>
           ))}
         </select>
 
-        <div
-          className="filters"
-          style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}
-        >
-          <h4 style={{ marginBottom: "0.2rem", fontSize: "1rem" }}>
-            🎶 Genres
-          </h4>
-          {filters.map((filter, index) => (
-            <span
-              key={index}
-              className={stationFilter === filter ? "selected" : ""}
+        <h4 className="text-md mb-2">🎶 Genres</h4>
+        <div className="flex flex-col gap-1">
+          {filters.map((filter) => (
+            <button
+              key={filter}
               onClick={() => setStationFilter(filter)}
-              style={{
-                padding: "0.3rem 0.5rem",
-                cursor: "pointer",
-                borderRadius: "4px",
-                background:
-                  stationFilter === filter ? "#8c52ff" : "transparent",
-                color: "#fff",
-                transition: "all 0.2s ease",
-              }}
+              className={`text-left px-2 py-1 rounded-md transition ${
+                stationFilter === filter
+                  ? "bg-purple-500 text-white"
+                  : "text-white/70 hover:bg-white/5"
+              }`}
             >
               {filter}
-            </span>
+            </button>
           ))}
         </div>
-      </div>
+      </aside>
 
-      {/* Main content */}
-      <div className="stations" style={{ flex: 1 }}>
+      {/* ================= STATIONS GRID ================= */}
+      <div className="flex-1">
         {currentStations.length === 0 ? (
-          <p style={{ color: "#ccc" }}>No stations found.</p>
+          <p className="text-white/60">No stations found.</p>
         ) : (
-          currentStations.map((station, index) => {
-            const shortName =
-              station.name.length > 36
-                ? station.name.slice(0, 36) + "..."
-                : station.name;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentStations.map((station) => {
+              const shortName =
+                station.name.length > 36
+                  ? station.name.slice(0, 36) + "…"
+                  : station.name;
 
-            return (
-              <div
-                className="station"
-                key={index}
-                style={{
-                  background: "#1f1f2e",
-                  borderRadius: "10px",
-                  marginBottom: "1rem",
-                  padding: "1rem",
-                  color: "#fff",
-                }}
-              >
-                <div
-                  className="stationName"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.8rem",
-                  }}
-                >
-                  <img
-                    src={station.favicon || defaultImage}
-                    alt="station logo"
-                    onError={setDefaultSrc}
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                    }}
+              const isPlaying = activeSrc === station.url_resolved;
+
+              return (
+                <div key={station.stationuuid} className="space-y-2">
+                  <StationCard
+                    name={shortName}
+                    country={station.country}
+                    image={station.favicon || defaultImage}
+                    genres={[stationFilter !== "all" ? stationFilter : "radio"]}
+                    playing={isPlaying}
+                    favorite={false}
+                    onPlay={() =>
+                      handlePlay(isPlaying ? null : station.url_resolved)
+                    }
+                    onFavorite={() =>
+                      console.log("favorite", station.stationuuid)
+                    }
                   />
-                  <div className="name" style={{ fontSize: "1rem" }}>
-                    {shortName}
-                  </div>
-                </div>
 
-                {/* Custom Audio Player */}
-                <CustomAudioPlayer
-                  key={station.stationuuid}
-                  src={station.url_resolved}
-                  isActive={activeSrc === station.url_resolved}
-                  onPlay={handlePlay}
-                  onError={handleError}
-                />
-              </div>
-            );
-          })
+                  <CustomAudioPlayer
+                    src={station.url_resolved}
+                    isActive={isPlaying}
+                    onPlay={handlePlay}
+                    onError={handleError}
+                  />
+                </div>
+              );
+            })}
+          </div>
         )}
 
-        {/* Pagination */}
+        {/* ================= PAGINATION ================= */}
         {filteredStations.length > stationsPerPage && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: "1rem",
-              gap: "1rem",
-            }}
-          >
+          <div className="flex justify-center items-center gap-4 mt-8">
             <button
-              onClick={handlePrev}
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              style={{
-                background: "#444",
-                color: "#fff",
-                padding: "0.5rem 1rem",
-                border: "none",
-                borderRadius: "5px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                opacity: currentPage === 1 ? 0.5 : 1,
-              }}
+              className="btn-outline-premium disabled:opacity-40"
             >
-              ⬅ Prev
+              Prev
             </button>
-            <span style={{ color: "#fff" }}>
+
+            <span className="text-white/70">
               Page {currentPage} of {totalPages}
             </span>
+
             <button
-              onClick={handleNext}
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              style={{
-                background: "#444",
-                color: "#fff",
-                padding: "0.5rem 1rem",
-                border: "none",
-                borderRadius: "5px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                opacity: currentPage === totalPages ? 0.5 : 1,
-              }}
+              className="btn-outline-premium disabled:opacity-40"
             >
-              Next ➡
+              Next
             </button>
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
