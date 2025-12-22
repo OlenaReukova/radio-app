@@ -9,11 +9,11 @@ interface AddToQueueButtonProps {
   className?: string;
 }
 
-export function AddToQueueButton(props: AddToQueueButtonProps) {
-  const onAddToQueue = props.onAddToQueue;
-  const disabled = props.disabled ?? false;
-  const className = props.className;
-
+export function AddToQueueButton({
+  onAddToQueue,
+  disabled = false,
+  className,
+}: AddToQueueButtonProps) {
   return (
     <Button
       type="button"
