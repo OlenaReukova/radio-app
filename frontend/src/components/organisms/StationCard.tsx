@@ -1,9 +1,9 @@
 import { Play, Pause } from "lucide-react";
 import { cn } from "../ui/utils";
 import { GenreTagGroup } from "../atoms/GenreTagGroup";
-import { Share2 } from "lucide-react";
 import { FavoriteButton } from "../atoms/FavoriteButton";
 import { AddToQueueButton } from "../atoms/AddToQueueButton";
+import { ShareButton } from "../atoms/ShareButton";
 
 interface StationCardProps {
   name: string;
@@ -15,6 +15,7 @@ interface StationCardProps {
   onFavorite: () => void;
   onAddToQueue: () => void;
   favorite: boolean;
+  onShare: () => void;
 }
 
 export function StationCard({
@@ -27,6 +28,7 @@ export function StationCard({
   onFavorite,
   favorite,
   onAddToQueue,
+  onShare,
 }: StationCardProps) {
   return (
     <div className={cn("card-interactive group")}>
@@ -64,16 +66,7 @@ export function StationCard({
         <div className="mt-4 grid grid-cols-3 gap-3">
           <FavoriteButton active={favorite} onToggle={onFavorite} />
           <AddToQueueButton onAddToQueue={onAddToQueue} />
-          <button
-            aria-label="Share station"
-            className="flex items-center justify-center gap-2 px-3 py-2.5
-               bg-white/5 border border-white/10 rounded-xl
-               text-purple-200/70
-               hover:bg-white/10 hover:border-purple-500/30
-               transition-all"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
+          <ShareButton onShare={onShare} />
         </div>
       </div>
     </div>
