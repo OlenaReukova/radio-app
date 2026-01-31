@@ -1,11 +1,22 @@
-import type { InputHTMLAttributes } from "react";
-import type { VariantProps } from "class-variance-authority";
-import type { inputVariants } from "./input.variants";
+import * as React from "react";
+import { type InputProps } from "./input.types";
+import { cn } from "../../ui/utils";
+import { inputVariants } from "./input.variants";
+import { Input as UIInput } from "../../ui/input";
 
-type NativeInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size">;
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, variant, scale, shape, state, ...props }, ref) => {
+    return (
+      <UIInput
+        ref={ref}
+        className={cn(
+          inputVariants({ variant, scale, shape, state }),
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 
-export interface InputProps
-  extends NativeInputProps,
-    VariantProps<typeof inputVariants> {
-  hasError?: boolean;
-}
+Input.displayName = "Input";
