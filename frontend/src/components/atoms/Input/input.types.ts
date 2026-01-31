@@ -1,3 +1,5 @@
 import * as React from "react";
+import { type InputVariants } from "./input.variants";
 
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement>, InputVariants {}
