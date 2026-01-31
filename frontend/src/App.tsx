@@ -4,7 +4,7 @@ import Radio from "./Radio";
 import Hero from "./Hero";
 import Footer from "./Footer";
 import { Toaster } from "sonner";
-import { SearchInput } from "./components/molecules/SearchInput/SearchInput";
+import { CleanHeader } from "./components/organisms/Header/CleanHeader";
 
 function App() {
   useEffect(() => {
@@ -21,9 +21,9 @@ function App() {
   return (
     <>
       <Toaster richColors />
-      <div className="App">
+      <div className="App pt-16">
+        <CleanHeader />
         <h1>Radio Player</h1>
-        <SearchInput />
         <Hero />
         <Radio />
         <Footer />

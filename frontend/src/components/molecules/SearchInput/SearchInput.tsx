@@ -45,10 +45,14 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             type="button"
             onClick={() => {
               setInternalValue("");
+
+              onChange?.({
+                target: { value: "" },
+              } as React.ChangeEvent<HTMLInputElement>);
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2
-            text-purple-300/50 hover:text-purple-300
-            transition-colors"
+      text-purple-300/50 hover:text-purple-300
+      transition-colors"
             aria-label="Clear search"
           >
             <X size={16} />
