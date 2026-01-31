@@ -5,7 +5,6 @@ export function CleanHeader() {
         fixed
         top-0
         left-0
-        md:left-20
         right-0
         z-[100]
         h-16
