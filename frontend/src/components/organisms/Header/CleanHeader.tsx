@@ -5,6 +5,7 @@ export function CleanHeader() {
         fixed
         top-0
         left-0
+        md:left-20
         right-0
         z-[100]
         h-16
@@ -14,7 +15,7 @@ export function CleanHeader() {
         border-white/10
       "
     >
-      <div className="h-full flex items-center px-4">Header</div>
+      <div className="h-full flex items-center px-4 md:px-6">Header</div>
     </header>
   );
 }
