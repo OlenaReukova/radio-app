@@ -1,7 +1,17 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
 export const inputVariants = cva(
-  "flex w-full min-w-0 outline-none transition-all",
+  [
+    //Base
+    "flex w-full min-w-0 outline-none transition-all",
+    //Typography
+    "text-white placeholder:text-purple-300/40",
+    // Interaction
+    "focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50",
+
+    // Disabled
+    "disabled:pointer-events-none disabled:opacity-50",
+  ].join(" "),
   {
     variants: {
       variant: {
