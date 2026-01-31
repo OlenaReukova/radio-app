@@ -27,6 +27,7 @@ export function CleanHeader({ searchQuery, onSearchChange }: CleanHeaderProps) {
             placeholder="Search stations..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            className="text-sm sm:text-base"
           />
         </div>
       </div>
