@@ -21,7 +21,6 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
 
     return (
       <div className="relative w-full group">
-        {/* Left search icon */}
         <Search
           size={20}
           className="absolute left-3 top-1/2 -translate-y-1/2
@@ -29,7 +28,6 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           group-focus-within:text-purple-300"
         />
 
-        {/* Input */}
         <Input
           ref={ref}
           shape="pill"
@@ -38,11 +36,10 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             setInternalValue(e.target.value);
             onChange?.(e);
           }}
-          className={cn("pl-10 pr-10", className)}
+          className={cn("pl-9 pr-9 sm:pl-10 sm:pr-10", className)}
           {...props}
         />
 
-        {/* Clear button */}
         {showClear && (
           <button
             type="button"
