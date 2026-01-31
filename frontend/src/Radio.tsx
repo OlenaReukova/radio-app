@@ -21,9 +21,6 @@ export default function Radio() {
 
   const stationsPerPage = 20;
 
-  // =========================
-  // DATA FETCHING
-  // =========================
   useEffect(() => {
     setupApi(stationFilter, selectedCountry).then((data) => {
       setStations(data);
@@ -33,7 +30,7 @@ export default function Radio() {
           data
             .map((s) => s.country)
             .filter((c) => c && c.trim() !== "")
-            .sort()
+            .sort(),
         ),
       ];
 
@@ -44,7 +41,7 @@ export default function Radio() {
 
   const setupApi = async (
     filter: string,
-    country: string
+    country: string,
   ): Promise<Station[]> => {
     try {
       const baseUrl =
@@ -64,9 +61,6 @@ export default function Radio() {
     }
   };
 
-  // =========================
-  // AUDIO CONTROL
-  // =========================
   const handlePlay = useCallback((src: string | null) => {
     setActiveSrc(src);
   }, []);
@@ -75,9 +69,6 @@ export default function Radio() {
     alert("Станция недоступна");
   }, []);
 
-  // =========================
-  // FILTERING & PAGINATION
-  // =========================
   const filters = [
     "all",
     "classical",
@@ -101,15 +92,11 @@ export default function Radio() {
   const startIndex = (currentPage - 1) * stationsPerPage;
   const currentStations = filteredStations.slice(
     startIndex,
-    startIndex + stationsPerPage
+    startIndex + stationsPerPage,
   );
 
-  // =========================
-  // RENDER
-  // =========================
   return (
     <section className="flex gap-6 p-6">
-      {/* ================= SIDEBAR ================= */}
       <aside className="hidden md:block w-56 glass-effect rounded-xl p-4">
         <h3 className="text-lg mb-2">🌍 Country</h3>
 
@@ -143,12 +130,11 @@ export default function Radio() {
         </div>
       </aside>
 
-      {/* ================= STATIONS GRID ================= */}
       <div className="flex-1">
         {currentStations.length === 0 ? (
           <p className="text-white/60">No stations found.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {currentStations.map((station) => {
               const shortName =
                 station.name.length > 36
@@ -186,7 +172,6 @@ export default function Radio() {
           </div>
         )}
 
-        {/* ================= PAGINATION ================= */}
         {filteredStations.length > stationsPerPage && (
           <div className="flex justify-center items-center gap-4 mt-8">
             <button
