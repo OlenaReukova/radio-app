@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Input } from "../../atoms/Input";
 import { cn } from "../../ui/utils";
+import { Search } from "lucide-react";
 
 export type SearchInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
@@ -17,7 +18,11 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     }, [controlledValue]);
 
     return (
-      <div className="relative w-full">
+      <div className="relative w-full group">
+        <Search
+          size={20}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-300/50 transition-colors group-focus-within:text-purple-300"
+        />
         <Input
           ref={ref}
           shape="pill"
