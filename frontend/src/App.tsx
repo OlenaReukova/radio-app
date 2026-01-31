@@ -21,7 +21,7 @@ function App() {
   return (
     <>
       <Toaster richColors />
-      <div className="App">
+      <div className="App pt-16">
         <CleanHeader />
         <h1>Radio Player</h1>
         <Hero />
