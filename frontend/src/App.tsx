@@ -4,6 +4,7 @@ import Radio from "./Radio";
 import Hero from "./Hero";
 import Footer from "./Footer";
 import { Toaster } from "sonner";
+import { Input } from "./components/atoms/Input";
 
 function App() {
   useEffect(() => {
@@ -22,6 +23,7 @@ function App() {
       <Toaster richColors />
       <div className="App">
         <h1>Radio Player</h1>
+        <Input />
         <Hero />
         <Radio />
         <Footer />

@@ -1,11 +1,10 @@
-import type { InputHTMLAttributes } from "react";
-import type { VariantProps } from "class-variance-authority";
-import type { inputVariants } from "./input.variants";
+import * as React from "react";
 
-type NativeInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size">;
+export const Input = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => {
+  return <input ref={ref} {...props} />;
+});
 
-export interface InputProps
-  extends NativeInputProps,
-    VariantProps<typeof inputVariants> {
-  hasError?: boolean;
-}
+Input.displayName = "Input";

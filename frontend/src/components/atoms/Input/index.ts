@@ -1,2 +1,1 @@
-export * from "./input";
-export * from "./input.constants";
+export { Input } from "./Input";
