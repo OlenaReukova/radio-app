@@ -4,7 +4,7 @@ import { cn } from "../../ui/utils";
 import { inputVariants } from "./input.variants";
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, variant, scale, shape, state, ...props }, ref) => {
     return (
       <input ref={ref} className={cn(inputVariants(), className)} {...props} />
     );
