@@ -75,107 +75,13 @@
   }
 }
 
-@layer components {
-  /* =========================
-     Glass Effects
-     ========================= */
-
-  .glass-effect {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+@media (hover: hover) {
+  .hover-scale:hover {
+    transform: scale(1.1);
   }
 
-  .glass-dark {
-    @apply bg-black/20 backdrop-blur-md border border-white/5;
-  }
-
-  .glass-light {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
-  }
-
-  .glass-purple {
-    @apply bg-purple-500/5 backdrop-blur-md border border-purple-500/20;
-  }
-
-  /* =========================
-     Button — Glass (default)
-     ========================= */
-  .btn-glass {
-    @apply glass-effect text-purple-200/70 rounded-xl transition-all duration-200;
-  }
-
-  .btn-glass:hover {
-    @apply bg-white/10 border-purple-500/30;
-    transform: scale(1.05);
-  }
-
-  .btn-glass:active {
-    transform: scale(0.95);
-  }
-
-  .btn-glass:focus-visible {
-    @apply ring-2 ring-purple-500/50 outline-none;
-  }
-
-  .btn-glass:disabled {
-    @apply opacity-40 cursor-not-allowed;
-  }
-
-  /* =========================
-     Button — Primary
-     ========================= */
-  .btn-primary {
-    @apply text-white rounded-full transition-all duration-200;
-    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  }
-
-  .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
-  }
-
-  /* =========================
-     Button — Active
-     ========================= */
-  .btn-active {
-    @apply text-white rounded-xl;
-    background: linear-gradient(135deg, #e054ff 0%, #935cff 100%);
-    box-shadow: 0 0 12px rgba(224, 84, 255, 0.35);
-  }
-
-  /* =========================
-     Button — Destructive
-     ========================= */
-  .btn-destructive {
-    @apply glass-effect text-purple-200/70 rounded-xl transition-all;
-  }
-
-  .btn-destructive:hover {
-    @apply bg-red-500/10 border-red-500/30 text-red-400;
-  }
-
-  /* =========================
-     Premium button styles
-     ========================= */
-  .btn-premium {
-    @apply px-6 py-3 rounded-full font-medium transition-all duration-300;
-    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
-  }
-
-  .btn-premium:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
-  }
-
-  .btn-outline-premium {
-    @apply px-6 py-3 rounded-full font-medium transition-all duration-300;
-    background: transparent;
-    border: 2px solid rgba(168, 85, 247, 0.5);
-  }
-
-  .btn-outline-premium:hover {
-    background: rgba(168, 85, 247, 0.1);
-    border-color: #a855f7;
+  .hover-glow:hover {
+    box-shadow: 0 0 30px rgba(224, 84, 255, 0.7);
   }
 }
 

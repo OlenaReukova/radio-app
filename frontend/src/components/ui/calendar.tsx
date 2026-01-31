@@ -56,7 +56,7 @@ export function Calendar({
               type="button"
               onClick={onPreviousClick}
               className={cn(
-                buttonVariants({ variant: "outline" }),
+                buttonVariants({ variant: "glass" }),
                 "size-7 p-0 opacity-50 hover:opacity-100"
               )}
             >
@@ -67,7 +67,7 @@ export function Calendar({
               type="button"
               onClick={onNextClick}
               className={cn(
-                buttonVariants({ variant: "outline" }),
+                buttonVariants({ variant: "glass" }),
                 "size-7 p-0 opacity-50 hover:opacity-100"
               )}
             >
