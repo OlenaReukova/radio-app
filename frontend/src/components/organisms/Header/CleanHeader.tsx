@@ -1,4 +1,11 @@
-export function CleanHeader() {
+import { SearchInput } from "../../molecules/SearchInput/SearchInput";
+
+interface CleanHeaderProps {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+}
+
+export function CleanHeader({ searchQuery, onSearchChange }: CleanHeaderProps) {
   return (
     <header
       className="
@@ -14,7 +21,15 @@ export function CleanHeader() {
         border-white/10
       "
     >
-      <div className="h-full flex items-center px-4 md:px-6">Header</div>
+      <div className="h-full flex items-center px-4 md:px-6 gap-4">
+        <div className="flex-1 max-w-xl">
+          <SearchInput
+            placeholder="Search stations..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+      </div>
     </header>
   );
 }
