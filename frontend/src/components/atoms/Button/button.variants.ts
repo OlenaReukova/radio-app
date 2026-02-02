@@ -36,7 +36,7 @@ export const buttonVariants = cva(
           "hover:scale-105 active:scale-95",
 
         ghost:
-          "px-3 py-2.5 rounded-xl text-purple-200/70 " +
+          " rounded-full text-purple-200/70 " +
           "hover:bg-white/5 hover:text-white",
 
         cta:
