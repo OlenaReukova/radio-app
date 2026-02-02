@@ -8,6 +8,7 @@ interface CleanHeaderProps {
   onSearchChange: (value: string) => void;
   onToggleFilters: () => void;
   isFiltersOpen: boolean;
+  activeFiltersCount?: number;
 }
 
 export function CleanHeader({
@@ -15,6 +16,7 @@ export function CleanHeader({
   onSearchChange,
   onToggleFilters,
   isFiltersOpen,
+  activeFiltersCount,
 }: CleanHeaderProps) {
   return (
     <header
@@ -52,6 +54,21 @@ export function CleanHeader({
               isFiltersOpen ? "rotate-90" : "group-hover:rotate-90",
             )}
           />
+          {activeFiltersCount && activeFiltersCount > 0 && (
+            <span
+              className="
+        absolute -top-1 -right-1
+        min-w-[18px] h-[18px]
+        px-1
+        flex items-center justify-center
+        text-[10px] font-medium
+        rounded-full
+        bg-purple-500 text-white
+      "
+            >
+              {activeFiltersCount}
+            </span>
+          )}
         </Button>
         <div className="flex-1 max-w-xl">
           <SearchInput
