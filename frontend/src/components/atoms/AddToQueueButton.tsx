@@ -1,5 +1,5 @@
 import { ListPlus } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../atoms/Button/Button";
 import { Icon } from "./Icon";
 
 interface AddToQueueButtonProps {

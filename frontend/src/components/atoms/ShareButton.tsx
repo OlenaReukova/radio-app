@@ -1,4 +1,4 @@
-import { Button } from "../ui/button";
+import { Button } from "../atoms/Button/Button";
 import { Icon } from "./Icon";
 import { Share2 } from "lucide-react";
 
