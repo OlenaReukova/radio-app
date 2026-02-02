@@ -98,6 +98,11 @@ export function CleanHeader({
             </Button>
           </div>
         )}
+        {currentUser && (
+          <Button type="button" variant="glass" size="md">
+            {currentUser.name.charAt(0).toUpperCase()}
+          </Button>
+        )}
       </div>
     </header>
   );
