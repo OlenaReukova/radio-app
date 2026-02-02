@@ -9,6 +9,13 @@ interface CleanHeaderProps {
   onToggleFilters: () => void;
   isFiltersOpen: boolean;
   activeFiltersCount?: number;
+  currentUser: null | {
+    id: string;
+    name: string;
+    email: string;
+  };
+  onSignIn: () => void;
+  onSignUp: () => void;
 }
 
 export function CleanHeader({
@@ -17,6 +24,9 @@ export function CleanHeader({
   onToggleFilters,
   isFiltersOpen,
   activeFiltersCount,
+  currentUser,
+  onSignIn,
+  onSignUp,
 }: CleanHeaderProps) {
   return (
     <header
@@ -78,6 +88,16 @@ export function CleanHeader({
             className="text-sm sm:text-base"
           />
         </div>
+        {!currentUser && (
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button type="button" onClick={onSignIn} variant="ghost" size="md">
+              Sign In
+            </Button>
+            <Button type="button" onClick={onSignUp} variant="cta" size="md">
+              Sign Up
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );
