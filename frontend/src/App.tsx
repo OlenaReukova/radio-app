@@ -5,6 +5,7 @@ import Hero from "./Hero";
 import Footer from "./Footer";
 import { Toaster } from "sonner";
 import { CleanHeader } from "./components/organisms/Header/CleanHeader";
+import { AccountMenu } from "./components/molecules/AccountMenu/AccountMenu";
 
 function App() {
   useEffect(() => {
@@ -23,6 +24,7 @@ function App() {
       <Toaster richColors />
       <div className="App pt-16">
         <CleanHeader />
+        <AccountMenu user={elena} />
         <h1>Radio Player</h1>
         <Hero />
         <Radio />
