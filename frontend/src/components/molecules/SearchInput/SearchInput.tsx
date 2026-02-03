@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Input } from "../../atoms/Input";
+import { Input } from "../../atoms/Input/index";
 import { cn } from "../../ui/utils";
 import { Search, X } from "lucide-react";
 
