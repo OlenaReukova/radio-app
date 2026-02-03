@@ -29,7 +29,20 @@ export function AccountMenu({ user }: AccountMenuProps) {
           </AvatarFallback>
         </Avatar>
       </Button>
-      {open && <div className="absolute right-0 mt-2 w-64"></div>}
+      {open && (
+        <div role="menu" className="absolute right-0 mt-2 w-64">
+          <div>
+            <p className="text-white truncate">{user.name}</p>
+            <p className="text-purple-300/60 text-sm truncate">{user.email}</p>
+          </div>
+          <div className="py-2">
+            <MenuItem>Profile</MenuItem>
+            <MenuItem>Settings</MenuItem>
+            <MenuItem>Listening Insights</MenuItem>
+            <MenuItem>Subscription</MenuItem>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
