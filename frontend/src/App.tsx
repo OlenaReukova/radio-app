@@ -19,13 +19,19 @@ function App() {
     Cookies.set("yetAnotherCookie", "yetAnotherValue", { sameSite: "lax" });
   }, []);
 
+  const elena = {
+    id: "1",
+    name: "Elena",
+    email: "elena@example.com",
+  };
+
   return (
     <>
       <Toaster richColors />
       <div className="App pt-16">
         <CleanHeader />
-        <AccountMenu user={elena} />
         <h1>Radio Player</h1>
+        <AccountMenu user={elena} />
         <Hero />
         <Radio />
         <Footer />
