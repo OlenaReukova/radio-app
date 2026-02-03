@@ -36,37 +36,42 @@ export function CleanHeader({
         left-0
         right-0
         z-[100]
-        h-16
+        px-3
+        md:px-6
+        py-3
+        md:py-4
         bg-[#1F1529]/80
         backdrop-blur-xl
         border-b
         border-white/10
       "
     >
-      <div className="h-full flex items-center px-4 md:px-6 gap-4">
-        <Button
-          type="button"
-          onClick={onToggleFilters}
-          aria-label={isFiltersOpen ? "Close Filters" : "Open filters"}
-          aria-pressed={isFiltersOpen}
-          variant="glass"
-          size="icon-sm"
-          className={cn(
-            "group border transition-all",
-            isFiltersOpen
-              ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/50 text-purple-300"
-              : "bg-white/5 border-white/10 text-purple-300 hover:bg-white/10 hover:text-white",
-          )}
-        >
-          <SlidersHorizontal
-            className={cn(
-              "w-4 h-4 md:w-5 md:h-5 transition-transform duration-300",
-              isFiltersOpen ? "rotate-90" : "group-hover:rotate-90",
-            )}
-          />
-          {activeFiltersCount && activeFiltersCount > 0 && (
-            <span
-              className="
+      <div className="h-full px-4 md:px-6">
+        <div className="flex items-center  ">
+          <div className="flex items-center gap-2 px-3">
+            <Button
+              type="button"
+              onClick={onToggleFilters}
+              aria-label={isFiltersOpen ? "Close Filters" : "Open filters"}
+              aria-pressed={isFiltersOpen}
+              variant="glass"
+              size="icon-sm"
+              className={cn(
+                "group border transition-all",
+                isFiltersOpen
+                  ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/50 text-purple-300"
+                  : "bg-white/5 border-white/10 text-purple-300 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <SlidersHorizontal
+                className={cn(
+                  "w-4 h-4 md:w-5 md:h-5 transition-transform duration-300",
+                  isFiltersOpen ? "rotate-90" : "group-hover:rotate-90",
+                )}
+              />
+              {activeFiltersCount && activeFiltersCount > 0 && (
+                <span
+                  className="
         absolute -top-1 -right-1
         min-w-[18px] h-[18px]
         px-1
@@ -75,34 +80,48 @@ export function CleanHeader({
         rounded-full
         bg-purple-500 text-white
       "
-            >
-              {activeFiltersCount}
-            </span>
-          )}
-        </Button>
-        <div className="flex-1 max-w-xl">
-          <SearchInput
-            placeholder="Search stations..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="text-sm sm:text-base"
-          />
-        </div>
-        {!currentUser && (
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button type="button" onClick={onSignIn} variant="ghost" size="md">
-              Sign In
-            </Button>
-            <Button type="button" onClick={onSignUp} variant="cta" size="md">
-              Sign Up
+                >
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
           </div>
-        )}
-        {currentUser && (
-          <Button type="button" variant="glass" size="md">
-            {currentUser.name.charAt(0).toUpperCase()}
-          </Button>
-        )}
+          <div className="flex-1 max-w-2xl mx-auto">
+            <SearchInput
+              placeholder="Search stations..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="text-sm sm:text-base"
+            />
+          </div>
+          {!currentUser && (
+            <div className="flex items-center gap-2 ">
+              <Button
+                type="button"
+                onClick={onSignIn}
+                variant="ghost"
+                size="md"
+              >
+                Sign In
+              </Button>
+              <Button type="button" onClick={onSignUp} variant="cta" size="md">
+                Sign Up
+              </Button>
+            </div>
+          )}
+          {currentUser && (
+            <div className="relative">
+              <Button
+                type="button"
+                variant="avatar"
+                size="icon-sm"
+                className="md:h-10 md:w-10"
+              >
+                {currentUser.name.charAt(0).toUpperCase()}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
