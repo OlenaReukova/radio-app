@@ -30,8 +30,17 @@ export function AccountMenu({ user }: AccountMenuProps) {
         </Avatar>
       </Button>
       {open && (
-        <div role="menu" className="absolute right-0 mt-2 w-64">
-          <div>
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-64
+      bg-[#3A2F4A]
+      border border-white/10
+      rounded-xl
+      shadow-2xl shadow-black/50
+      overflow-hidden
+      z-[110]"
+        >
+          <div className="px-4 py-3 border-b border-white/10 bg-white/5">
             <p className="text-white truncate">{user.name}</p>
             <p className="text-purple-300/60 text-sm truncate">{user.email}</p>
           </div>
@@ -44,5 +53,21 @@ export function AccountMenu({ user }: AccountMenuProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function MenuItem({ children }: { children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      className="
+        w-full px-4 py-2.5
+        text-left text-purple-200
+        hover:bg-white/5 hover:text-white
+        transition-all
+      "
+    >
+      {children}
+    </button>
   );
 }
