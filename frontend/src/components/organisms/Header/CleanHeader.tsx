@@ -3,6 +3,7 @@ import { SearchInput } from "../../molecules/SearchInput/SearchInput";
 import { SlidersHorizontal, Sparkles } from "lucide-react";
 import { cn } from "../../ui/utils";
 import { AccountMenu } from "../../molecules/AccountMenu";
+import { Tooltip, TooltipTrigger } from "@radix-ui/react-tooltip";
 
 interface CleanHeaderProps {
   searchQuery: string;
@@ -99,10 +100,12 @@ export function CleanHeader({
                 className="text-sm sm:text-base"
               />
               {onOpenAISearch && (
-                <Button
-                  onClick={onOpenAISearch}
-                  variant="glass"
-                  className="hidden md:flex
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onOpenAISearch}
+                      variant="glass"
+                      className="hidden md:flex
               items-center gap-2
               shrink-0
               px-4 py-2.5
@@ -116,11 +119,13 @@ export function CleanHeader({
               hover:shadow-[#E054FF]/30
               transition-all
               group"
-                  title="AI Search Assistant"
-                >
-                  <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
-                  <span className="text-sm">AI Search</span>
-                </Button>
+                      title="AI Search Assistant"
+                    >
+                      <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
+                      <span className="text-sm">AI Search</span>
+                    </Button>
+                  </TooltipTrigger>
+                </Tooltip>
               )}
             </div>
           </div>

@@ -49,6 +49,13 @@ export const buttonVariants = cva(
           "bg-gradient-to-br from-purple-500 to-pink-500 " +
           "shadow-lg shadow-purple-500/30 " +
           "hover:shadow-purple-500/50 hover:scale-105",
+
+        aiContext:
+          "flex items-center gap-2 " +
+          "px-4 py-2 rounded-full whitespace-nowrap flex-shrink-0 " +
+          "transition-all " +
+          "bg-white/5 text-white/60 " +
+          "hover:bg-white/10 hover:text-white",
       },
 
       size: {
