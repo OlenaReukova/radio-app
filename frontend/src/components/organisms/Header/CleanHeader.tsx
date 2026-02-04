@@ -1,8 +1,9 @@
 import { Button } from "../../atoms/Button";
 import { SearchInput } from "../../molecules/SearchInput/SearchInput";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Sparkles } from "lucide-react";
 import { cn } from "../../ui/utils";
 import { AccountMenu } from "../../molecules/AccountMenu";
+import { Tooltip, TooltipTrigger } from "@radix-ui/react-tooltip";
 
 interface CleanHeaderProps {
   searchQuery: string;
@@ -17,6 +18,8 @@ interface CleanHeaderProps {
   };
   onSignIn: () => void;
   onSignUp: () => void;
+
+  onOpenAISearch?: () => void;
 }
 
 export function CleanHeader({
@@ -28,6 +31,7 @@ export function CleanHeader({
   currentUser,
   onSignIn,
   onSignUp,
+  onOpenAISearch,
 }: CleanHeaderProps) {
   return (
     <header
@@ -73,28 +77,70 @@ export function CleanHeader({
               {activeFiltersCount && activeFiltersCount > 0 && (
                 <span
                   className="
-        absolute -top-1 -right-1
-        min-w-[18px] h-[18px]
-        px-1
-        flex items-center justify-center
-        text-[10px] font-medium
-        rounded-full
-        bg-purple-500 text-white
-      "
+                  absolute -top-1 -right-1
+                  min-w-[18px] h-[18px]
+                  px-1
+                  flex items-center justify-center
+                  text-[10px] font-medium
+                  rounded-full
+                  bg-purple-500 text-white
+                "
                 >
                   {activeFiltersCount}
                 </span>
               )}
             </Button>
+            <h1
+              className="
+                text-base md:text-xl
+                bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400
+                bg-clip-text text-transparent
+                font-semibold whitespace-nowrap
+              "
+            >
+              RadioWave
+            </h1>
           </div>
+
           <div className="flex-1 max-w-2xl mx-auto">
-            <SearchInput
-              placeholder="Search stations..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="text-sm sm:text-base"
-            />
+            <div className="flex items-center gap-2">
+              <SearchInput
+                placeholder="Search stations..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="text-sm sm:text-base"
+              />
+              {onOpenAISearch && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onOpenAISearch}
+                      variant="glass"
+                      className="hidden md:flex
+              items-center gap-2
+              shrink-0
+              px-4 py-2.5
+              bg-gradient-to-r
+              from-[#E054FF]/20
+              to-[#935CFF]/20
+              border border-[#E054FF]/30
+              text-[#E054FF]
+              rounded-full
+              hover:shadow-lg
+              hover:shadow-[#E054FF]/30
+              transition-all
+              group"
+                      title="AI Search Assistant"
+                    >
+                      <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
+                      <span className="text-sm">AI Search</span>
+                    </Button>
+                  </TooltipTrigger>
+                </Tooltip>
+              )}
+            </div>
           </div>
+
           {!currentUser && (
             <div className="flex items-center gap-2 ">
               <Button
