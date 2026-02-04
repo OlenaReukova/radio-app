@@ -90,7 +90,18 @@ export function CleanHeader({
                 </span>
               )}
             </Button>
+            <h1
+              className="
+                text-base md:text-xl
+                bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400
+                bg-clip-text text-transparent
+                font-semibold whitespace-nowrap
+              "
+            >
+              RadioWave
+            </h1>
           </div>
+
           <div className="flex-1 max-w-2xl mx-auto">
             <div className="flex items-center gap-2">
               <SearchInput
