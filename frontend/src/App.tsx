@@ -5,7 +5,6 @@ import Hero from "./Hero";
 import Footer from "./Footer";
 import { Toaster } from "sonner";
 import { CleanHeader } from "./components/organisms/Header/CleanHeader";
-import { AccountMenu } from "./components/molecules/AccountMenu/AccountMenu";
 
 function App() {
   useEffect(() => {
@@ -19,19 +18,12 @@ function App() {
     Cookies.set("yetAnotherCookie", "yetAnotherValue", { sameSite: "lax" });
   }, []);
 
-  const elena = {
-    id: "1",
-    name: "Elena",
-    email: "elena@example.com",
-  };
-
   return (
     <>
       <Toaster richColors />
       <div className="App pt-16">
         <CleanHeader />
         <h1>Radio Player</h1>
-        <AccountMenu user={elena} />
         <Hero />
         <Radio />
         <Footer />
