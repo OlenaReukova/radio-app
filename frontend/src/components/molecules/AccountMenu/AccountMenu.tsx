@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { Button } from "../../atoms/Button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AccountMenuProps {
   user: {
@@ -12,9 +12,26 @@ interface AccountMenuProps {
 
 export function AccountMenu({ user }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <Button
         type="button"
         variant="avatar"
