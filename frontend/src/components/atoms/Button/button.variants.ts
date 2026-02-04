@@ -43,6 +43,12 @@ export const buttonVariants = cva(
           "bg-gradient-to-r from-purple-500 to-pink-500 " +
           "text-white rounded-full hover:shadow-lg " +
           "hover:shadow-purple-500/50 hover:scale-105",
+
+        avatar:
+          "rounded-full text-white " +
+          "bg-gradient-to-br from-purple-500 to-pink-500 " +
+          "shadow-lg shadow-purple-500/30 " +
+          "hover:shadow-purple-500/50 hover:scale-105",
       },
 
       size: {
