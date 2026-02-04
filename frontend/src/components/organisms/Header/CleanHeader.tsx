@@ -2,6 +2,7 @@ import { Button } from "../../atoms/Button";
 import { SearchInput } from "../../molecules/SearchInput/SearchInput";
 import { SlidersHorizontal } from "lucide-react";
 import { cn } from "../../ui/utils";
+import { AccountMenu } from "../../molecules/AccountMenu";
 
 interface CleanHeaderProps {
   searchQuery: string;
@@ -109,18 +110,7 @@ export function CleanHeader({
               </Button>
             </div>
           )}
-          {currentUser && (
-            <div className="relative">
-              <Button
-                type="button"
-                variant="avatar"
-                size="icon-sm"
-                className="md:h-10 md:w-10"
-              >
-                {currentUser.name.charAt(0).toUpperCase()}
-              </Button>
-            </div>
-          )}
+          {currentUser && <AccountMenu user={currentUser} />}
         </div>
       </div>
     </header>
