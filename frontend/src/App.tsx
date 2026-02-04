@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import { Toaster } from "sonner";
 import { CleanHeader } from "./components/organisms/Header/CleanHeader";
 import { useState } from "react";
+import { AISearchModal } from "./components/organisms/AISearchModal/AISearchModal";
 
 function App() {
   useEffect(() => {
@@ -21,6 +22,12 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isAISearchOpen, setIsAISearchOpen] = useState(false);
+  const [currentUser] = useState<null | {
+    id: string;
+    name: string;
+    email: string;
+  }>(null);
 
   return (
     <>
@@ -34,9 +41,12 @@ function App() {
           currentUser={null}
           onSignIn={() => console.log("Sign In")}
           onSignUp={() => console.log("Sign Up")}
-          onOpenAISearch={() => {
-            console.log("AI Search opened");
-          }}
+          onOpenAISearch={() => setIsAISearchOpen(true)}
+        />
+        <AISearchModal
+          isOpen={isAISearchOpen}
+          onClose={() => setIsAISearchOpen(false)}
+          isSignedIn={Boolean(currentUser)}
         />
         <h1>Radio Player</h1>
         <Hero />
