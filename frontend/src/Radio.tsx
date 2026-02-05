@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
 import { StationCard } from "./components/organisms/StationCard";
+import { useOutletContext } from "react-router-dom";
 
 type Station = {
   stationuuid: string;
@@ -10,12 +11,19 @@ type Station = {
   favicon?: string;
   url_resolved: string;
 };
+type RadioLayoutContext = {
+  stationFilter: string;
+  selectedCountry: string;
+  setCountries: (countries: string[]) => void;
+};
 
 export default function Radio() {
+  const { stationFilter, selectedCountry, setCountries } =
+    useOutletContext<RadioLayoutContext>();
   const [stations, setStations] = useState<Station[]>([]);
-  const [stationFilter, setStationFilter] = useState("all");
-  const [countries, setCountries] = useState<string[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState("All countries");
+  // const [stationFilter, setStationFilter] = useState("all");
+  // const [countries, setCountries] = useState<string[]>([]);
+  // const [selectedCountry, setSelectedCountry] = useState("All countries");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
 
@@ -37,7 +45,7 @@ export default function Radio() {
       setCountries(["All countries", ...uniqueCountries]);
       setCurrentPage(1);
     });
-  }, [stationFilter, selectedCountry]);
+  }, [stationFilter, selectedCountry, setCountries]);
 
   const setupApi = async (
     filter: string,
@@ -69,19 +77,19 @@ export default function Radio() {
     alert("Станция недоступна");
   }, []);
 
-  const filters = [
-    "all",
-    "classical",
-    "country",
-    "dance",
-    "disco",
-    "house",
-    "jazz",
-    "pop",
-    "rap",
-    "retro",
-    "rock",
-  ];
+  // const filters = [
+  //   "all",
+  //   "classical",
+  //   "country",
+  //   "dance",
+  //   "disco",
+  //   "house",
+  //   "jazz",
+  //   "pop",
+  //   "rap",
+  //   "retro",
+  //   "rock",
+  // ];
 
   const filteredStations = stations.filter((station) => {
     if (selectedCountry === "All countries") return true;
@@ -96,8 +104,8 @@ export default function Radio() {
   );
 
   return (
-    <section className="flex gap-6 p-6">
-      <aside className="hidden md:block w-56 glass-effect rounded-xl p-4">
+    <section className="p-6">
+      {/* <aside className="hidden md:block w-56 glass-effect rounded-xl p-4">
         <h3 className="text-lg mb-2">🌍 Country</h3>
 
         <select
@@ -128,7 +136,7 @@ export default function Radio() {
             </button>
           ))}
         </div>
-      </aside>
+      </aside> */}
 
       <div className="flex-1">
         {currentStations.length === 0 ? (
