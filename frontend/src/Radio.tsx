@@ -3,7 +3,7 @@ import CustomAudioPlayer from "./CustomAudioPlayer";
 import defaultImage from "./radio.avif";
 import { StationCard } from "./components/organisms/StationCard";
 import { useOutletContext } from "react-router-dom";
-
+//working radio playback before refactor
 type Station = {
   stationuuid: string;
   name: string;
