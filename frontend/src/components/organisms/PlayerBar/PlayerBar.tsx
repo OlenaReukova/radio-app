@@ -1,5 +1,4 @@
 import { PlayerBarProps } from "./PlayerBar.types";
-
 export function PlayerBar({
   status,
   stationName,

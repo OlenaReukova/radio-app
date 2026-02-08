@@ -2,6 +2,8 @@ import { CleanHeader } from "../../organisms/Header/CleanHeader";
 import { Outlet } from "react-router-dom";
 import { RadioSidebar } from "../../organisms/SidebarNav/RadioSidebar";
 import { useState } from "react";
+import { useRadioPlayer } from "../../../lib/player/useRadioPlayer";
+import { PlayerBar } from "../../organisms/PlayerBar/PlayerBar";
 
 // Structural Contract
 // Behavioural Contract
@@ -11,6 +13,7 @@ export function AppLayout() {
   const [stationFilter, setStationFilter] = useState("all");
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
+  const player = useRadioPlayer();
 
   const filters = [
     "all",
@@ -61,7 +64,13 @@ export function AppLayout() {
           />
         </main>
       </div>
-
+      <PlayerBar
+        status={player.status}
+        stationName={player.currentSrc}
+        onPlayPause={() => player.stop()}
+        volume={player.volume}
+        onVolumeChange={player.setVolume}
+      />
       {/* <MobileBottomNav />
       <PlayerBar /> */}
     </div>
