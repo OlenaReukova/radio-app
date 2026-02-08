@@ -1,5 +1,6 @@
 import type { PlayerStatus } from "../../../lib/player/radioPlayer.types";
 
+//player bar props
 export interface PlayerBarProps {
   status: PlayerStatus;
   stationName: string | null;
