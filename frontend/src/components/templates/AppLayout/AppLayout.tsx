@@ -61,6 +61,7 @@ export function AppLayout() {
               stationFilter,
               selectedCountry,
               setCountries,
+              player,
             }}
           />
         </main>
