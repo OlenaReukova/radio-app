@@ -13,6 +13,7 @@ export function AppLayout() {
   const [stationFilter, setStationFilter] = useState("all");
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
+  //intagrate player bar into layout
   const player = useRadioPlayer();
 
   const filters = [
