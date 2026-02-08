@@ -1,5 +1,7 @@
 import { PlayerBarProps } from "./PlayerBar.types";
 
+//player bar is following figma ui. No audio logic inside the component
+//layout-level UI
 export function PlayerBar({
   status,
   stationName,
