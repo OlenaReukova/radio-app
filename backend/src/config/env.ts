@@ -5,7 +5,7 @@ dotenv.config();
 type EnvKeys = keyof typeof env;
 
 const env = {
-  PORT: process.env.PORT || "5000",
+  PORT: process.env.PORT || "5001",
   REDIS_URL: process.env.REDIS_URL,
   REDIS_TOKEN: process.env.REDIS_TOKEN,
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
