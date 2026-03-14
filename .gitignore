@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+#  AI Skills output
+.ai-skills/output
