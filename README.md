@@ -92,7 +92,7 @@ Create a `.env` file in the `backend/` directory with the following variables:
 
 ```env
 PORT=5001
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=
 REDIS_URL=
 REDIS_TOKEN=
 TURSO_DATABASE_URL=
@@ -203,7 +203,7 @@ npm test
 
 ### New Design (in progress)
 
-| Mobile | Mobile |
+| Desktop| Mobile |
 |---|---|
 | ![New design 1](https://github.com/user-attachments/assets/3ce862fa-7f05-4793-bece-a4ab37f4c388) | ![New design 2](https://github.com/user-attachments/assets/1604d731-f046-4284-813f-5fb950c01124) |
 
