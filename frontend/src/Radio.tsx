@@ -54,7 +54,7 @@ export default function Radio() {
   async function setupApi(filter: string, country: string): Promise<Station[]> {
     try {
       const baseUrl =
-        import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+        import.meta.env.VITE_SERVER_URL || "http://localhost:5001";
 
       const params = new URLSearchParams();
       if (filter !== "all") params.append("genre", filter);
