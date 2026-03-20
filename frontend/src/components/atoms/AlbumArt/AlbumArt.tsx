@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Radio } from "lucide-react";
 import { cn } from "../../ui/utils";
 import { albumArtVariants } from "./albumArt.variants";
@@ -13,6 +13,11 @@ export function AlbumArt({
   ...props
 }: AlbumArtProps) {
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   const showFallback = !src || hasError;
 
   return (

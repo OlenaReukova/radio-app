@@ -1,21 +1,16 @@
-//hook
 import { useRef, useState, useCallback } from "react";
 import { Howl, Howler } from "howler";
 import { PlayerStatus, PlayerStation } from "./radioPlayer.types";
 
 export function useRadioPlayer() {
-  //useRef is used for outside things(sound, timer, socket)
   const soundRef = useRef<Howl | null>(null);
 
-  //what station is playing, what state is, and what volume is
-  //states for UI
   const [currentStation, setCurrentStation] = useState<PlayerStation | null>(
     null,
   );
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [volume, setVolumeState] = useState(1);
 
-  // derived: stream URL of the currently playing station
   const currentSrc = currentStation?.url_resolved ?? null;
 
   const setVolume = useCallback((v: number) => {

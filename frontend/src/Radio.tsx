@@ -98,10 +98,11 @@ export default function Radio() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {currentStations.map((station) => {
+              const trimmedName = station.name.trim();
               const shortName =
-                station.name.length > 36
-                  ? station.name.slice(0, 36) + "…"
-                  : station.name;
+                trimmedName.length > 36
+                  ? trimmedName.slice(0, 36) + "…"
+                  : trimmedName;
 
               return (
                 <StationCard
@@ -115,6 +116,8 @@ export default function Radio() {
                   onPlay={() =>
                     player.toggle({
                       ...station,
+                      name: trimmedName,
+                      favicon: station.favicon || defaultImage,
                       genres: [stationFilter !== "all" ? stationFilter : "radio"],
                     })
                   }
