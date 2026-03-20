@@ -2,19 +2,17 @@ import { CleanHeader } from "../../organisms/Header/CleanHeader";
 import { Outlet } from "react-router-dom";
 import { RadioSidebar } from "../../organisms/SidebarNav/RadioSidebar";
 import { useState } from "react";
-import { useRadioPlayer } from "../../../lib/player/useRadioPlayer";
+import {
+  RadioPlayerProvider,
+  useRadioPlayerContext,
+} from "../../../lib/player/RadioPlayerContext";
 import { PlayerBar } from "../../organisms/PlayerBar/PlayerBar";
 
-// Structural Contract
-// Behavioural Contract
-// Integration Rules
-// Forbidden Patterns
-export function AppLayout() {
+function AppLayoutContent() {
   const [stationFilter, setStationFilter] = useState("all");
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState("All countries");
-  //intagrate player bar into layout
-  const player = useRadioPlayer();
+  const player = useRadioPlayerContext();
 
   const filters = [
     "all",
@@ -43,9 +41,6 @@ export function AppLayout() {
       />
 
       <div className="flex pt-[72px] gap-6 px-6">
-        {/* <aside className="hidden md:block w-[80px]">
-          <SidebarNav />
-        </aside> */}
         <RadioSidebar
           countries={countries}
           selectedCountry={selectedCountry}
@@ -73,8 +68,14 @@ export function AppLayout() {
         volume={player.volume}
         onVolumeChange={player.setVolume}
       />
-      {/* <MobileBottomNav />
-      <PlayerBar /> */}
     </div>
+  );
+}
+
+export function AppLayout() {
+  return (
+    <RadioPlayerProvider>
+      <AppLayoutContent />
+    </RadioPlayerProvider>
   );
 }
