@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { Howl, Howler } from "howler";
+import { Howl } from "howler";
 import { PlayerStatus, PlayerStation } from "./radioPlayer.types";
 
 export function useRadioPlayer() {
@@ -20,23 +20,41 @@ export function useRadioPlayer() {
 
   const play = useCallback(
     (station: PlayerStation) => {
-      Howler.stop();
       setStatus("loading");
 
-      soundRef.current?.unload();
+      const oldHowl = soundRef.current;
+      soundRef.current = null;
+      oldHowl?.unload();
 
-      soundRef.current = new Howl({
+      let loadErrorTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const howl = new Howl({
         src: [station.url_resolved],
         html5: true,
         volume,
-        onplay: () => setStatus("playing"),
-        onpause: () => setStatus("paused"),
-        onend: () => setStatus("idle"),
-        onloaderror: () => setStatus("error"),
-        onplayerror: () => setStatus("error"),
+        onplay: () => {
+          if (soundRef.current !== howl) return;
+          if (loadErrorTimeout) clearTimeout(loadErrorTimeout);
+          setStatus("playing");
+        },
+        onpause: () => { if (soundRef.current === howl) setStatus("paused"); },
+        onend: () => { if (soundRef.current === howl) setStatus("idle"); },
+        onloaderror: () => {
+          if (soundRef.current !== howl) return;
+          loadErrorTimeout = setTimeout(() => {
+            if (soundRef.current === howl) setStatus("error");
+          }, 5000);
+        },
+        onplayerror: () => {
+          if (soundRef.current !== howl) return;
+          howl.once("unlock", () => {
+            if (soundRef.current === howl) howl.play();
+          });
+        },
       });
 
-      soundRef.current.play();
+      soundRef.current = howl;
+      howl.play();
       setCurrentStation(station);
     },
     [volume],

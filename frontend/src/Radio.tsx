@@ -53,12 +53,6 @@ export default function Radio() {
     });
   }, [stationFilter, selectedCountry, setCountries]);
 
-  useEffect(() => {
-    if (player.status === "error") {
-      alert("Станция недоступна");
-    }
-  }, [player.status]);
-
   async function setupApi(filter: string, country: string): Promise<Station[]> {
     try {
       const baseUrl =

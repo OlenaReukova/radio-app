@@ -22,6 +22,14 @@ export function PlayerBar({
   const visible = status !== "idle";
   const isPlaying = status === "playing";
 
+  const statusConfig = {
+    playing: { dot: "bg-green-400 animate-pulse", label: "Live" },
+    loading: { dot: "bg-yellow-400 animate-pulse", label: "Loading" },
+    error:   { dot: "bg-red-400", label: "Unavailable" },
+    paused:  { dot: "bg-gray-400", label: "Paused" },
+    idle:    { dot: "bg-gray-400", label: "Paused" },
+  };
+
   return (
     <div
       className={cn(
@@ -93,14 +101,9 @@ export function PlayerBar({
               />
 
               <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    isPlaying ? "bg-green-400 animate-pulse" : "bg-gray-400",
-                  )}
-                />
-                <span className="text-xs text-purple-300">
-                  {isPlaying ? "Live" : "Paused"}
+                <div className={cn("w-2 h-2 rounded-full", statusConfig[status].dot)} />
+                <span className={cn("text-xs", status === "error" ? "text-red-400" : "text-purple-300")}>
+                  {statusConfig[status].label}
                 </span>
               </div>
             </div>
