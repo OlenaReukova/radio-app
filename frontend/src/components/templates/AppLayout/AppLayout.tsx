@@ -17,7 +17,7 @@ function AppLayoutContent() {
   const player = useRadioPlayerContext();
 
   useEffect(() => {
-    if (player.status === "idle") {
+    if (player.status === "idle" || player.status === "paused") {
       setExpandedPlayer(false);
     }
   }, [player.status]);
@@ -66,7 +66,7 @@ function AppLayoutContent() {
           onFilterChange={setStationFilter}
         />
 
-        <main className="flex-1">
+        <main className="flex-1 pb-[140px] md:pb-[72px]">
           <Outlet
             context={{
               stationFilter,
