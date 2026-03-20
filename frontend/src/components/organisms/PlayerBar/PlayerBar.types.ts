@@ -1,10 +1,14 @@
-import type { PlayerStatus } from "../../../lib/player/radioPlayer.types";
+import type { PlayerStatus, PlayerStation } from "../../../lib/player/radioPlayer.types";
 
-//player bar props
 export interface PlayerBarProps {
   status: PlayerStatus;
-  stationName: string | null;
-  onPlayPause: () => void;
+  station: PlayerStation | null;
   volume: number;
+  onPlayPause: () => void;
   onVolumeChange: (v: number) => void;
+  onNext?: () => void;
+  hasQueue?: boolean;
+  isFavorite?: boolean;
+  onFavoriteToggle?: () => void;
+  onExpand?: () => void;
 }

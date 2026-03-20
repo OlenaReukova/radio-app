@@ -63,7 +63,7 @@ function AppLayoutContent() {
       </div>
       <PlayerBar
         status={player.status}
-        stationName={player.currentStation?.name ?? null}
+        station={player.currentStation}
         onPlayPause={() => player.stop()}
         volume={player.volume}
         onVolumeChange={player.setVolume}
