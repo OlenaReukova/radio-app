@@ -34,8 +34,10 @@ export function PlayerBar({
     <div
       className={cn(
         "fixed bottom-16 md:bottom-6 left-0 md:left-24 right-0 md:right-6 z-50",
-        "transition-transform duration-300",
-        visible ? "translate-y-0" : "translate-y-full pointer-events-none",
+        "transition-[transform,opacity]",
+        visible
+          ? "translate-y-0 opacity-100 duration-300 ease-out"
+          : "translate-y-full opacity-0 pointer-events-none duration-300 ease-in",
       )}
     >
       <div className="max-w-7xl mx-auto">
