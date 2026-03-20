@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import defaultImage from "./radio.avif";
 import { StationCard } from "./components/organisms/StationCard";
-import type { PlayerStatus } from "./lib/player/radioPlayer.types";
+import type { PlayerStatus, PlayerStation } from "./lib/player/radioPlayer.types";
 
 type Station = {
   stationuuid: string;
@@ -22,7 +22,7 @@ type PlayerOutletContext = {
   player: {
     currentSrc: string | null;
     status: PlayerStatus;
-    toggle: (src: string) => void;
+    toggle: (station: PlayerStation) => void;
   };
 };
 
@@ -112,7 +112,12 @@ export default function Radio() {
                   genres={[stationFilter !== "all" ? stationFilter : "radio"]}
                   favorite={false}
                   playing={player.currentSrc === station.url_resolved}
-                  onPlay={() => player.toggle(station.url_resolved)}
+                  onPlay={() =>
+                    player.toggle({
+                      ...station,
+                      genres: [stationFilter !== "all" ? stationFilter : "radio"],
+                    })
+                  }
                   onFavorite={() =>
                     console.log("favorite", station.stationuuid)
                   }

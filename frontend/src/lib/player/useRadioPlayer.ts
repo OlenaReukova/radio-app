@@ -1,7 +1,7 @@
 //hook
 import { useRef, useState, useCallback } from "react";
 import { Howl, Howler } from "howler";
-import { PlayerStatus } from "./radioPlayer.types";
+import { PlayerStatus, PlayerStation } from "./radioPlayer.types";
 
 export function useRadioPlayer() {
   //useRef is used for outside things(sound, timer, socket)
@@ -9,9 +9,14 @@ export function useRadioPlayer() {
 
   //what station is playing, what state is, and what volume is
   //states for UI
-  const [currentSrc, setCurrentSrc] = useState<string | null>(null);
+  const [currentStation, setCurrentStation] = useState<PlayerStation | null>(
+    null,
+  );
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [volume, setVolumeState] = useState(1);
+
+  // derived: stream URL of the currently playing station
+  const currentSrc = currentStation?.url_resolved ?? null;
 
   const setVolume = useCallback((v: number) => {
     setVolumeState(v);
@@ -19,14 +24,14 @@ export function useRadioPlayer() {
   }, []);
 
   const play = useCallback(
-    (src: string) => {
+    (station: PlayerStation) => {
       Howler.stop();
       setStatus("loading");
 
       soundRef.current?.unload();
 
       soundRef.current = new Howl({
-        src: [src],
+        src: [station.url_resolved],
         html5: true,
         volume,
         onplay: () => setStatus("playing"),
@@ -37,7 +42,7 @@ export function useRadioPlayer() {
       });
 
       soundRef.current.play();
-      setCurrentSrc(src);
+      setCurrentStation(station);
     },
     [volume],
   );
@@ -46,22 +51,23 @@ export function useRadioPlayer() {
     soundRef.current?.stop();
     soundRef.current?.unload();
     soundRef.current = null;
-    setCurrentSrc(null);
+    setCurrentStation(null);
     setStatus("idle");
   }, []);
 
   const toggle = useCallback(
-    (src: string) => {
-      if (currentSrc === src) {
+    (station: PlayerStation) => {
+      if (currentStation?.url_resolved === station.url_resolved) {
         stop();
       } else {
-        play(src);
+        play(station);
       }
     },
-    [currentSrc, play, stop],
+    [currentStation, play, stop],
   );
 
   return {
+    currentStation,
     currentSrc,
     status,
     volume,
