@@ -11,7 +11,12 @@ export function useRadioPlayer() {
   //states for UI
   const [currentSrc, setCurrentSrc] = useState<string | null>(null);
   const [status, setStatus] = useState<PlayerStatus>("idle");
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolumeState] = useState(1);
+
+  const setVolume = useCallback((v: number) => {
+    setVolumeState(v);
+    soundRef.current?.volume(v);
+  }, []);
 
   const play = useCallback(
     (src: string) => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import defaultImage from "./radio.avif";
 import { StationCard } from "./components/organisms/StationCard";
+import type { PlayerStatus } from "./lib/player/radioPlayer.types";
 
 type Station = {
   stationuuid: string;
@@ -20,6 +21,7 @@ type RadioLayoutContext = {
 type PlayerOutletContext = {
   player: {
     currentSrc: string | null;
+    status: PlayerStatus;
     toggle: (src: string) => void;
   };
 };
@@ -50,6 +52,12 @@ export default function Radio() {
       setCurrentPage(1);
     });
   }, [stationFilter, selectedCountry, setCountries]);
+
+  useEffect(() => {
+    if (player.status === "error") {
+      alert("Станция недоступна");
+    }
+  }, [player.status]);
 
   async function setupApi(filter: string, country: string): Promise<Station[]> {
     try {
