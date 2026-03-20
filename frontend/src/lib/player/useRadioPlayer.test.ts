@@ -8,6 +8,7 @@ const {
   mockHowlStop,
   mockHowlUnload,
   mockHowlVolume,
+  mockHowlOnce,
   mockHowlerStop,
   capturedConfig,
   MockHowl,
@@ -18,6 +19,7 @@ const {
   const mockHowlStop = vi.fn();
   const mockHowlUnload = vi.fn();
   const mockHowlVolume = vi.fn();
+  const mockHowlOnce = vi.fn();
   const mockHowlerStop = vi.fn();
 
   const MockHowl = vi
@@ -29,6 +31,7 @@ const {
         stop: mockHowlStop,
         unload: mockHowlUnload,
         volume: mockHowlVolume,
+        once: mockHowlOnce,
       };
     });
 
@@ -38,6 +41,7 @@ const {
     mockHowlStop,
     mockHowlUnload,
     mockHowlVolume,
+    mockHowlOnce,
     mockHowlerStop,
     MockHowl,
   };
@@ -126,10 +130,11 @@ describe("useRadioPlayer", () => {
       expect(result.current.status).toBe("loading");
     });
 
-    it("calls Howler.stop() to clear any previous audio", () => {
+    it("unloads the previous Howl instance before creating a new one", () => {
       const { result } = renderHook(() => useRadioPlayer());
       act(() => result.current.play(stationA));
-      expect(mockHowlerStop).toHaveBeenCalledOnce();
+      act(() => result.current.play(stationB));
+      expect(mockHowlUnload).toHaveBeenCalledOnce();
     });
 
     it("creates a Howl instance using station.url_resolved as the src", () => {
@@ -160,18 +165,34 @@ describe("useRadioPlayer", () => {
       expect(result.current.status).toBe("idle");
     });
 
-    it("sets status to error when onloaderror fires", () => {
+    it("sets status to error after 5000ms debounce when onloaderror fires", () => {
+      vi.useFakeTimers();
       const { result } = renderHook(() => useRadioPlayer());
       act(() => result.current.play(stationA));
       fireHowlCallback("onloaderror");
+      expect(result.current.status).toBe("loading");
+      act(() => vi.advanceTimersByTime(5000));
       expect(result.current.status).toBe("error");
+      vi.useRealTimers();
     });
 
-    it("sets status to error when onplayerror fires", () => {
+    it("does not set error if onplay fires within 5000ms of onloaderror", () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useRadioPlayer());
+      act(() => result.current.play(stationA));
+      fireHowlCallback("onloaderror");
+      fireHowlCallback("onplay");
+      act(() => vi.advanceTimersByTime(5000));
+      expect(result.current.status).toBe("playing");
+      vi.useRealTimers();
+    });
+
+    it("registers an unlock retry when onplayerror fires and does not set error", () => {
       const { result } = renderHook(() => useRadioPlayer());
       act(() => result.current.play(stationA));
       fireHowlCallback("onplayerror");
-      expect(result.current.status).toBe("error");
+      expect(mockHowlOnce).toHaveBeenCalledWith("unlock", expect.any(Function));
+      expect(result.current.status).toBe("loading");
     });
   });
 

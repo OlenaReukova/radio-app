@@ -1,5 +1,5 @@
 export interface VolumeControlProps {
   volume: number;
   onVolumeChange: (v: number) => void;
-  orientation?: "horizontal" | "compact";
+  orientation?: "horizontal" | "compact" | "popover";
 }

@@ -1,6 +1,8 @@
 import type { PlayerStatus, PlayerStation } from "../../../lib/player/radioPlayer.types";
 
-export interface PlayerBarProps {
+export interface ExpandedMobilePlayerProps {
+  open: boolean;
+  onClose: () => void;
   status: PlayerStatus;
   station: PlayerStation | null;
   volume: number;
@@ -10,5 +12,4 @@ export interface PlayerBarProps {
   hasQueue?: boolean;
   isFavorite?: boolean;
   onFavoriteToggle?: () => void;
-  onExpand?: () => void;
 }
