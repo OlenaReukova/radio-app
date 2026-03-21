@@ -85,7 +85,7 @@ export default function Radio() {
   );
 
   return (
-    <section className="p-6">
+    <section className="p-0 md:p-6">
       <div className="flex-1">
         {currentStations.length === 0 ? (
           <p className="text-white/60">No stations found.</p>
