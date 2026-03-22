@@ -1,0 +1,118 @@
+import { CleanHeader } from "@/features/navigation/CleanHeader";
+import { Outlet } from "react-router-dom";
+import { RadioSidebar } from "@/features/navigation/RadioSidebar";
+import { AISearchAssistant } from "@/features/search/AISearchAssistant";
+import { useState, useEffect } from "react";
+import {
+  RadioPlayerProvider,
+  useRadioPlayerContext,
+} from "@/features/player/RadioPlayerContext";
+import { PlayerBar } from "@/features/player/PlayerBar";
+import { ExpandedMobilePlayer } from "@/features/player/ExpandedMobilePlayer";
+
+function AppLayoutContent() {
+  const [stationFilter, setStationFilter] = useState("all");
+  const [countries, setCountries] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState("All countries");
+  const [expandedPlayer, setExpandedPlayer] = useState(false);
+  const [isAISearchOpen, setIsAISearchOpen] = useState(false);
+  const player = useRadioPlayerContext();
+
+  useEffect(() => {
+    if (player.status === "idle" || player.status === "paused") {
+      setExpandedPlayer(false);
+    }
+  }, [player.status]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && window.innerWidth < 768) setExpandedPlayer(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const filters = [
+    "all",
+    "classical",
+    "country",
+    "dance",
+    "disco",
+    "house",
+    "jazz",
+    "pop",
+    "rap",
+    "retro",
+    "rock",
+  ];
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <CleanHeader
+        searchQuery=""
+        onSearchChange={() => {}}
+        onToggleFilters={() => {}}
+        isFiltersOpen={false}
+        currentUser={null}
+        onSignIn={() => {}}
+        onSignUp={() => {}}
+        onOpenAISearch={() => setIsAISearchOpen(true)}
+      />
+
+      <AISearchAssistant
+        isOpen={isAISearchOpen}
+        onClose={() => setIsAISearchOpen(false)}
+      />
+
+      <div className="flex pt-[72px] gap-6 px-6">
+        <RadioSidebar
+          countries={countries}
+          selectedCountry={selectedCountry}
+          onCountryChange={setSelectedCountry}
+          filters={filters}
+          activeFilter={stationFilter}
+          onFilterChange={setStationFilter}
+        />
+
+        <main className="flex-1 pb-[140px] md:pb-[72px]">
+          <Outlet
+            context={{
+              stationFilter,
+              selectedCountry,
+              setCountries,
+              player,
+              onOpenAISearch: () => setIsAISearchOpen(true),
+            }}
+          />
+        </main>
+      </div>
+
+      <PlayerBar
+        status={player.status}
+        station={player.currentStation}
+        onPlayPause={() => player.stop()}
+        volume={player.volume}
+        onVolumeChange={player.setVolume}
+        onExpand={() => setExpandedPlayer(true)}
+      />
+
+      <ExpandedMobilePlayer
+        open={expandedPlayer}
+        onClose={() => setExpandedPlayer(false)}
+        status={player.status}
+        station={player.currentStation}
+        volume={player.volume}
+        onPlayPause={() => player.stop()}
+        onVolumeChange={player.setVolume}
+      />
+    </div>
+  );
+}
+
+export function AppLayout() {
+  return (
+    <RadioPlayerProvider>
+      <AppLayoutContent />
+    </RadioPlayerProvider>
+  );
+}

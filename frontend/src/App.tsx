@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import Radio from "./Radio";
-import Hero from "./Hero";
-import Footer from "./Footer";
+import Hero from "@/components/layout/Hero";
+import Footer from "@/components/layout/Footer";
+import StationGrid from "@/features/stations/StationGrid";
 import { Toaster } from "sonner";
-import { CleanHeader } from "./components/organisms/Header/CleanHeader";
-import { TooltipProvider } from "./components/atoms/Tooltip/tooltip";
-import { AISearchAssistant } from "./components/organisms/AISearchModal/AISearchAssistant";
+import { CleanHeader } from "@/features/navigation/CleanHeader";
+import { TooltipProvider } from "@/components/shared/Tooltip";
+import { AISearchAssistant } from "@/features/search/AISearchAssistant";
 
 function App() {
   useEffect(() => {
@@ -44,9 +44,13 @@ function App() {
           onClose={() => setIsAISearchOpen(false)}
         />
 
-        <h1>Radio Player</h1>
-        <Hero />
-        <Radio />
+        <Hero
+          onStartListening={() => document.getElementById('station-grid')?.scrollIntoView({ behavior: 'smooth' })}
+          onExploreMoods={() => setIsAISearchOpen(true)}
+        />
+        <div id="station-grid">
+          <StationGrid />
+        </div>
         <Footer />
       </div>
     </TooltipProvider>

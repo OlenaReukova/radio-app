@@ -7,9 +7,9 @@ Its purpose is to ensure the frontend codebase remains scalable, readable, and m
 
 The architecture is based on:
 
-- Atomic Design principles
-- A design system–driven approach
-- Clear separation of concerns between UI, layout, and application logic
+- Feature-based organisation
+- Clear separation between shared UI and feature-specific code
+- A single UI primitive layer (shadcn/ui)
 
 This document is intended to be a long-living reference for frontend development.
 
@@ -19,247 +19,176 @@ This document is intended to be a long-living reference for frontend development
 
 The frontend architecture aims to:
 
-- Prevent structural and naming chaos as the codebase grows
-- Encourage reuse of UI components
-- Maintain visual and behavioural consistency
-- Separate visual components from business logic
-- Make theming and rebranding easier
+- Group code by feature, not by type
+- Make it easy to find everything related to one feature in one place
+- Keep shared components free of feature-specific logic
 - Provide a predictable structure for onboarding new developers
 
 ---
 
-## Architecture (Atomic Design)
+## Architecture (Feature-Based)
 
-The frontend is organised into layers, each with a clear responsibility.
-Each layer builds on top of the previous one, forming a structured and scalable UI system.
+The codebase is organised into four top-level concerns:
 
----
-
-## Components
-
-### Atoms
-
-Atoms are the smallest UI building blocks.
-They do not contain business or domain logic and are fully reusable.
-
-Examples:
-
-```text
-components/atoms/Button/
-components/atoms/Input/
-components/atoms/Icon/
-components/atoms/Badge/
-components/atoms/Tag/
-components/atoms/Card/
-components/atoms/Tooltip/
-components/atoms/Text/
-components/atoms/Skeleton/
-```
-
-#### Rules
-
-- No business logic
-- Styled via global CSS and design tokens
-- Implemented using variants (CVA)
-- Exposed through a stable public API
-
-### Molecules
-
-Molecules are combinations of atoms that form meaningful UI actions.
-They introduce semantic meaning, but still avoid page-level logic.
-
-Examples:
-
-```text
-components/molecules/SearchInput/
-components/molecules/AccountMenu/
-components/molecules/AudioPlayerControl/
-components/molecules/StationCard/
-```
-
-#### Rules
-
-- Built only from atoms
-- Represent a single semantic interaction
-- No routing or page-level logic
-
-### Organisms
-
-Organisms are larger UI structures composed of multiple molecules.
-They represent major sections of a page.
-
-Examples:
-
-```text
-components/organisms/Header/
-components/organisms/PlayerBar/
-components/organisms/SidebarNav/
-components/organisms/AISearchModal/
-components/organisms/StationCard/
-```
-
-#### Rules
-
-- Represent major page sections
-- May contain local state
-- Reusable across multiple pages
-
-### Templates
-
-Templates define page layouts and structural composition.
-They describe where things go, not what they do.
-
-Examples:
-
-```text
-components/templates/AppLayout/
-```
-
-#### Rules
-
-- Compose organisms into layouts
-- Define grid, spacing, and structure
-- Do not contain business logic
-
-### Pages
-
-The pages directory contains the actual application views.
-Pages assemble templates and components into the final user interface.
-
-Examples:
-
-```text
-pages/Home/
-pages/Library/
-pages/Trending/
-pages/ArticleDetail/
-```
-
-#### Rules
-
-- Assemble templates and UI components
-- May include page-specific logic
-- Represent navigable routes
+| Directory | Purpose |
+|---|---|
+| `components/ui/` | Unstyled shadcn/Radix primitives — single source of truth for base elements |
+| `components/shared/` | Reusable UI components used across two or more features |
+| `components/layout/` | App-level layout shells and structural wrappers |
+| `features/` | All feature-specific code — UI, logic, state, types co-located |
 
 ---
 
-## UI Primitives (components/ui)
+## components/ui/
 
-The `components/ui/` directory contains unstyled, accessible base components from [shadcn/ui](https://ui.shadcn.com/),
-built on top of Radix UI primitives.
+Raw [shadcn/ui](https://ui.shadcn.com/) components built on Radix UI primitives.
+These are the lowest-level building blocks. Never modified directly.
 
 ```text
 components/ui/
 ├── button.tsx
 ├── dialog.tsx
+├── input.tsx
 ├── select.tsx
 └── ...
 ```
 
-### Relationship to Atoms
+#### Rules
 
-| Layer | Purpose |
-|---|---|
-| `components/ui/` | Raw shadcn primitives — low-level, unstyled building blocks |
-| `components/atoms/` | Design system wrappers — apply project tokens, variants, and API |
-
-**Rule:** Never use `components/ui/` directly in pages or organisms. Always wrap through `components/atoms/` to keep the design system consistent and swappable.
+- Never modified — regenerated via shadcn CLI
+- Used directly only when no custom variant is required
+- Go through `components/shared/` when a branded variant or custom API is needed
 
 ---
 
-## Layout System (layout/)
+## components/shared/
 
-The `layout/` directory contains structural, non-visual layout primitives.
-These are spacing and composition utilities — they control *how* content is arranged, not what it looks like.
+Reusable UI components used across two or more features.
+They have no knowledge of any specific feature's domain logic.
 
 ```text
-layout/
-├── Container/       # Max-width page wrapper
-├── Grid/            # CSS grid layout
-├── Stack/           # Flex column/row with gap
-├── Inline/          # Horizontal flex layout
-├── Section/         # Vertical page section with spacing
-├── Overlay/         # Absolute positioned overlay wrapper
-├── PageShell.tsx    # Full-page shell with main content area
-└── sticky/
-    ├── StickyHeader.tsx
-    ├── StickyBottom.tsx
-    └── MobileNavSticky.tsx
+components/shared/
+├── Button.tsx       # Branded button with CVA variants
+├── Input.tsx        # Styled input wrapper
+├── Tag.tsx          # Label/tag with variants
+├── Skeleton.tsx     # Loading skeleton variants
+└── ...
 ```
 
 #### Rules
 
-- No visual styling (no colours, no shadows)
-- No business logic
-- Used to compose organisms and templates into structured pages
+- No feature-specific imports
+- No routing or page-level logic
+- Styled via CVA variants and Tailwind
+- Types defined inline unless exported and reused elsewhere
 
 ---
 
-## Application Logic (lib/)
+## components/layout/
 
-The `lib/` directory contains all non-UI application logic.
-
-### Current Structure
+App-level structural components that define the page frame.
 
 ```text
-lib/
-└── player/
-    ├── useRadioPlayer.ts    # Howler.js audio playback hook
-    └── radioPlayer.types.ts # Player state types
+components/layout/
+├── AppLayout.tsx     # Root layout — composes header, sidebar, outlet, player bar
+├── PageShell.tsx     # Full-page content wrapper
+└── ...               # Sticky wrappers, hero, footer, etc.
 ```
 
-### Planned Structure
+#### Rules
 
-```text
-lib/
-├── player/
-├── hooks/       # Shared custom React hooks
-├── helpers/     # Pure utility functions
-├── store/       # Global state management
-└── types/       # Shared TypeScript types (Station, Filters, etc.)
-```
+- No feature-specific business logic
+- `AppLayout` is the only place that composes features at the top level
+- Shared state is passed to pages via React Router outlet context
 
 ---
 
-## Styles
+## features/
 
-Global styles are stored in the styles directory.
+Each feature directory contains everything related to that feature:
+UI components, hooks, context, and types — all co-located.
 
 ```text
-styles/
-└── globals.css
+features/
+└── <feature-name>/
+    ├── <FeatureName>.tsx         # Main UI component(s)
+    ├── use<FeatureName>.ts       # Custom hook(s) for logic
+    ├── <FeatureName>Context.tsx  # Context provider (if shared state is needed)
+    ├── <featureName>.types.ts    # Types and interfaces
+    └── <FeatureName>.test.ts     # Tests
 ```
 
-#### Responsibilities
+#### Rules
 
-- Design tokens (colours, spacing, typography)
-- Global utilities
-- Animations and resets
+- A feature owns all its UI, logic, state, and types
+- Features do not import from other features
+- If something is needed by two features, move it to `components/shared/`
+- Context providers are mounted in `AppLayout` and consumed via a custom hook
 
 ---
 
-## Assets
+## pages/
 
-Static assets are stored separately from code.
+Pages are thin — they assemble features into a view and wire up callbacks.
+No business logic lives here.
 
 ```text
-assets/
-├── fonts/
-└── images/
+pages/
+└── <PageName>/
+    └── <PageName>.tsx
 ```
+
+#### Rules
+
+- Import from `features/` and `components/`
+- May read outlet context to receive shared state
+- No direct data fetching or domain logic
 
 ---
 
-## Routing
-
-Routing is handled by React Router. The router is defined in `routes/router.tsx`.
+## routes/
 
 ```text
 routes/
 └── router.tsx    # createBrowserRouter — route definitions
 ```
 
-All routes are wrapped in the `AppLayout` template, which provides the persistent sidebar, header, and player bar.
+All routes are children of `AppLayout`, which provides the persistent shell.
+
+---
+
+## styles/
+
+```text
+styles/
+└── global.css
+```
+
+Responsibilities:
+
+- `@layer base` — body background, typography scale
+- `@layer components` — reusable CSS patterns (e.g. `.btn-premium`)
+- `@layer utilities` — animations, gradient text, glow effects
+- Scrollbar customisation
+
+Design tokens (colours, z-index, animations) are defined in `tailwind.config.js`, not inline in components.
+
+---
+
+## Styling
+
+| Tool | Purpose |
+|---|---|
+| Tailwind CSS | Utility-first styling |
+| CVA (class-variance-authority) | Variant management in shared components |
+| tailwind-merge + clsx (`cn()`) | Safe className merging |
+| shadcn/ui | Base component primitives |
+
+#### Rules
+
+- Brand colours and z-index values are defined as tokens in `tailwind.config.js`
+- Repeated visual patterns (glass card, gradient button) are extracted to `@layer components` in `global.css`
+- Avoid hardcoded hex values in component files — use token-based classes
 
 ---
 
@@ -268,54 +197,30 @@ All routes are wrapped in the `AppLayout` template, which provides the persisten
 ```text
 frontend/
 ├── src/
-│   ├── assets/
-│   │   ├── fonts/
-│   │   └── images/
 │   ├── components/
-│   │   ├── atoms/
-│   │   ├── molecules/
-│   │   ├── organisms/
-│   │   ├── templates/
-│   │   └── ui/              # shadcn primitives (do not use directly)
-│   ├── layout/
-│   │   ├── Container/
-│   │   ├── Grid/
-│   │   ├── Stack/
-│   │   ├── Inline/
-│   │   ├── Section/
-│   │   ├── Overlay/
-│   │   ├── PageShell.tsx
-│   │   └── sticky/
-│   ├── lib/
-│   │   ├── player/
-│   │   ├── hooks/           # planned
-│   │   ├── helpers/         # planned
-│   │   ├── store/           # planned
-│   │   └── types/           # planned
+│   │   ├── ui/          # shadcn primitives — do not modify
+│   │   ├── shared/      # reusable cross-feature components
+│   │   └── layout/      # app shell, page wrappers
+│   ├── features/
+│   │   └── <feature>/   # UI + logic + state + types per feature
 │   ├── pages/
+│   │   └── <Page>/
 │   ├── routes/
 │   │   └── router.tsx
 │   ├── styles/
-│   │   └── globals.css
-│   ├── App.tsx
+│   │   └── global.css
 │   └── main.tsx
-├── package.json
-└── vite.config.ts
+├── tailwind.config.js
+├── vite.config.js
+└── package.json
 ```
 
 ---
 
-## Component Internal Structure
+## Adding a new feature
 
-Each component follows a predictable internal structure to support a design system.
-
-Example: Button (Atom)
-
-```text
-components/atoms/Button/
-├── Button.tsx           # React component implementation
-├── button.variants.ts   # Design system variants (CVA)
-├── button.types.ts      # Public TypeScript API
-├── button.constants.ts  # Optional enums or constants
-└── index.ts             # Public export
-```
+1. Create `features/<feature-name>/`
+2. Co-locate all UI, hooks, context, and types inside it
+3. Mount any context provider in `AppLayout`
+4. If a component is reused by another feature, move it to `components/shared/`
+5. Do not import one feature from another — communicate via shared state or outlet context
