@@ -11,8 +11,6 @@ The architecture is based on:
 - Clear separation between shared UI and feature-specific code
 - A single UI primitive layer (shadcn/ui)
 
-This document is intended to be a long-living reference for frontend development.
-
 ---
 
 ## Goals
@@ -22,7 +20,6 @@ The frontend architecture aims to:
 - Group code by feature, not by type
 - Make it easy to find everything related to one feature in one place
 - Keep shared components free of feature-specific logic
-- Provide a predictable structure for onboarding new developers
 
 ---
 
@@ -47,32 +44,46 @@ These are the lowest-level building blocks. Never modified directly.
 ```text
 components/ui/
 ├── button.tsx
+├── badge.tsx
+├── card.tsx
 ├── dialog.tsx
 ├── input.tsx
 ├── select.tsx
+├── slider.tsx
+├── tooltip.tsx
 └── ...
 ```
 
 #### Rules
 
 - Never modified — regenerated via shadcn CLI
+- Not used directly in features — go through `components/shared/` when a custom variant or API is needed
 - Used directly only when no custom variant is required
-- Go through `components/shared/` when a branded variant or custom API is needed
 
 ---
 
 ## components/shared/
 
-Reusable UI components used across two or more features.
+Reusable UI components that are used in two or more features.
 They have no knowledge of any specific feature's domain logic.
 
 ```text
 components/shared/
-├── Button.tsx       # Branded button with CVA variants
-├── Input.tsx        # Styled input wrapper
-├── Tag.tsx          # Label/tag with variants
-├── Skeleton.tsx     # Loading skeleton variants
-└── ...
+├── Button.tsx          # CVA variants: primary, glass, active, ghost, cta, avatar, aiContext
+├── AlbumArt.tsx        # Station artwork with size and glow variants
+├── EqualizerBars.tsx   # Animated equalizer indicator
+├── Icon.tsx
+├── Input.tsx
+├── Tag.tsx
+├── Skeleton.tsx        # Skeleton, SkeletonAvatar, SkeletonCard, SkeletonText
+├── FavoriteButton.tsx
+├── FavoriteToggle.tsx
+├── ShareButton.tsx
+├── AddToQueueButton.tsx
+├── GenreTagGroup.tsx
+├── AccountMenu.tsx
+├── Tooltip.tsx
+└── Sidebar.tsx
 ```
 
 #### Rules
@@ -80,7 +91,7 @@ components/shared/
 - No feature-specific imports
 - No routing or page-level logic
 - Styled via CVA variants and Tailwind
-- Types defined inline unless exported and reused elsewhere
+- Types defined inline (no separate `.types.ts` file unless the type is exported and reused elsewhere)
 
 ---
 
@@ -90,59 +101,97 @@ App-level structural components that define the page frame.
 
 ```text
 components/layout/
-├── AppLayout.tsx     # Root layout — composes header, sidebar, outlet, player bar
-├── PageShell.tsx     # Full-page content wrapper
-└── ...               # Sticky wrappers, hero, footer, etc.
+├── AppLayout.tsx        # Root layout — wraps RadioPlayerProvider, renders Header, Sidebar, Outlet, PlayerBar
+├── Hero.tsx             # Landing hero section
+├── Footer.tsx
+├── PageShell.tsx
+├── StickyHeader.tsx
+├── StickyBottom.tsx
+└── MobileNavSticky.tsx
 ```
 
 #### Rules
 
 - No feature-specific business logic
-- `AppLayout` is the only place that composes features at the top level
-- Shared state is passed to pages via React Router outlet context
+- `AppLayout` is the only component that composes features at the top level
+- Outlet context is used to pass shared state down to pages
 
 ---
 
 ## features/
 
-Each feature directory contains everything related to that feature:
-UI components, hooks, context, and types — all co-located.
+Each feature directory contains all code related to that feature:
+UI components, hooks, context, types. No feature imports from another feature directly.
+
+### features/player/
+
+Audio playback feature — the core feature of the app.
 
 ```text
-features/
-└── <feature-name>/
-    ├── <FeatureName>.tsx         # Main UI component(s)
-    ├── use<FeatureName>.ts       # Custom hook(s) for logic
-    ├── <FeatureName>Context.tsx  # Context provider (if shared state is needed)
-    ├── <featureName>.types.ts    # Types and interfaces
-    └── <FeatureName>.test.ts     # Tests
+features/player/
+├── RadioPlayerContext.tsx    # React context provider wrapping useRadioPlayer
+├── useRadioPlayer.ts         # Howler.js playback hook — play, pause, stop, volume, status
+├── useRadioPlayer.test.ts
+├── player.types.ts           # PlayerStatus, RadioStation, RadioPlayerState
+├── PlayerBar.tsx             # Fixed bottom bar — station info, controls, volume, expand trigger
+├── ExpandedMobilePlayer.tsx  # Full-screen mobile player overlay
+├── MiniPlayerControls.tsx    # Play/pause/stop icon controls
+└── VolumeControl.tsx         # Volume slider
 ```
 
-#### Rules
+State flow:
 
-- A feature owns all its UI, logic, state, and types
-- Features do not import from other features
-- If something is needed by two features, move it to `components/shared/`
-- Context providers are mounted in `AppLayout` and consumed via a custom hook
+```
+RadioPlayerProvider (AppLayout)
+  └── useRadioPlayerContext()
+        ├── PlayerBar
+        ├── ExpandedMobilePlayer
+        └── StationCard (play trigger via outlet context)
+```
+
+### features/stations/
+
+Station browsing and playback triggering.
+
+```text
+features/stations/
+├── StationGrid.tsx    # Fetches and renders the station list, handles filters from outlet context
+└── StationCard.tsx    # Station card — artwork, genre tags, play button, favourite/share/queue actions
+```
+
+### features/search/
+
+AI-powered station discovery.
+
+```text
+features/search/
+├── SearchInput.tsx        # Controlled search input with clear button
+├── AISearchModal.tsx      # Modal shell for the AI search experience
+└── AISearchAssistant.tsx  # AI chat interface inside the modal
+```
+
+### features/navigation/
+
+App navigation — header and sidebar.
+
+```text
+features/navigation/
+├── CleanHeader.tsx    # Fixed top bar — logo, search, filter toggle, AI search button, account menu
+└── RadioSidebar.tsx   # Desktop left sidebar — genre filters, country selector
+```
 
 ---
 
 ## pages/
 
-Pages are thin — they assemble features into a view and wire up callbacks.
+Pages are thin — they assemble features into a view and pass context down.
 No business logic lives here.
 
 ```text
 pages/
-└── <PageName>/
-    └── <PageName>.tsx
+└── Home/
+    └── Home.tsx    # Renders Hero + StationGrid, wires outlet context to callbacks
 ```
-
-#### Rules
-
-- Import from `features/` and `components/`
-- May read outlet context to receive shared state
-- No direct data fetching or domain logic
 
 ---
 
@@ -150,10 +199,15 @@ pages/
 
 ```text
 routes/
-└── router.tsx    # createBrowserRouter — route definitions
+└── router.tsx    # createBrowserRouter — AppLayout wraps all routes
 ```
 
-All routes are children of `AppLayout`, which provides the persistent shell.
+Route tree:
+
+```
+AppLayout
+└── / → Home
+```
 
 ---
 
@@ -167,11 +221,11 @@ styles/
 Responsibilities:
 
 - `@layer base` — body background, typography scale
-- `@layer components` — reusable CSS patterns (e.g. `.btn-premium`)
-- `@layer utilities` — animations, gradient text, glow effects
+- `@layer components` — reusable CSS patterns: `.btn-premium`, `.btn-outline-premium`
+- `@layer utilities` — animations (`animate-float`, `animate-slide-in`, etc.), `.gradient-text`, `.neon-glow`
 - Scrollbar customisation
 
-Design tokens (colours, z-index, animations) are defined in `tailwind.config.js`, not inline in components.
+Design tokens (colours, z-index, animations) are defined in `tailwind.config.js`.
 
 ---
 
@@ -181,14 +235,14 @@ Design tokens (colours, z-index, animations) are defined in `tailwind.config.js`
 |---|---|
 | Tailwind CSS | Utility-first styling |
 | CVA (class-variance-authority) | Variant management in shared components |
-| tailwind-merge + clsx (`cn()`) | Safe className merging |
+| tailwind-merge + clsx (`cn()`) | Safe className merging — `components/ui/utils.ts` |
 | shadcn/ui | Base component primitives |
 
-#### Rules
+Custom design tokens in `tailwind.config.js`:
 
-- Brand colours and z-index values are defined as tokens in `tailwind.config.js`
-- Repeated visual patterns (glass card, gradient button) are extracted to `@layer components` in `global.css`
-- Avoid hardcoded hex values in component files — use token-based classes
+- `colors.brand` — `brand-purple` (`#935CFF`), `brand-pink` (`#E054FF`)
+- `colors.surface` — `surface-base`, `surface-raised`, `surface-deep`
+- `zIndex` — `header`, `player`, `overlay`, `mobile-nav`
 
 ---
 
@@ -198,13 +252,16 @@ Design tokens (colours, z-index, animations) are defined in `tailwind.config.js`
 frontend/
 ├── src/
 │   ├── components/
-│   │   ├── ui/          # shadcn primitives — do not modify
-│   │   ├── shared/      # reusable cross-feature components
-│   │   └── layout/      # app shell, page wrappers
+│   │   ├── ui/              # shadcn primitives — do not modify
+│   │   ├── shared/          # reusable cross-feature components
+│   │   └── layout/          # AppLayout, Hero, Footer, sticky wrappers
 │   ├── features/
-│   │   └── <feature>/   # UI + logic + state + types per feature
+│   │   ├── player/          # audio engine + player UI
+│   │   ├── stations/        # station grid + card
+│   │   ├── search/          # AI search
+│   │   └── navigation/      # header + sidebar
 │   ├── pages/
-│   │   └── <Page>/
+│   │   └── Home/
 │   ├── routes/
 │   │   └── router.tsx
 │   ├── styles/
@@ -219,8 +276,7 @@ frontend/
 
 ## Adding a new feature
 
-1. Create `features/<feature-name>/`
-2. Co-locate all UI, hooks, context, and types inside it
-3. Mount any context provider in `AppLayout`
-4. If a component is reused by another feature, move it to `components/shared/`
-5. Do not import one feature from another — communicate via shared state or outlet context
+1. Create `features/<feature-name>/` directory
+2. Put all UI components, hooks, context, and types inside it
+3. If a component is needed by two or more features, move it to `components/shared/`
+4. Wire it into `AppLayout` or a page via outlet context — do not import features from other features directly
